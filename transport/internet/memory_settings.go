@@ -1,8 +1,8 @@
 package internet
 
 import (
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/transport/internet/finalmask"
+	"github.com/0x1488/xray-core/common/net"
+	"github.com/0x1488/xray-core/transport/internet/finalmask"
 )
 
 // MemoryStreamConfig is a parsed form of StreamConfig. It is used to reduce the number of Protobuf parses.

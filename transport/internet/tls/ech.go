@@ -16,14 +16,14 @@ import (
 	"time"
 
 	utls "github.com/refraction-networking/utls"
-	"github.com/xtls/xray-core/common/crypto"
+	"github.com/0x1488/xray-core/common/crypto"
 	"golang.org/x/net/http2"
 
 	"github.com/miekg/dns"
-	"github.com/xtls/xray-core/common/errors"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/utils"
-	"github.com/xtls/xray-core/transport/internet"
+	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0x1488/xray-core/common/net"
+	"github.com/0x1488/xray-core/common/utils"
+	"github.com/0x1488/xray-core/transport/internet"
 	"golang.org/x/crypto/cryptobyte"
 )
 

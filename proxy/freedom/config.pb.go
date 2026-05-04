@@ -7,10 +7,10 @@
 package freedom
 
 import (
-	geodata "github.com/xtls/xray-core/common/geodata"
-	net "github.com/xtls/xray-core/common/net"
-	protocol "github.com/xtls/xray-core/common/protocol"
-	internet "github.com/xtls/xray-core/transport/internet"
+	geodata "github.com/0x1488/xray-core/common/geodata"
+	net "github.com/0x1488/xray-core/common/net"
+	protocol "github.com/0x1488/xray-core/common/protocol"
+	internet "github.com/0x1488/xray-core/transport/internet"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

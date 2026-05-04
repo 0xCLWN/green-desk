@@ -3,9 +3,9 @@ package conf
 import (
 	"encoding/json"
 
-	"github.com/xtls/xray-core/common/errors"
-	"github.com/xtls/xray-core/common/serial"
-	"github.com/xtls/xray-core/proxy/blackhole"
+	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0x1488/xray-core/common/serial"
+	"github.com/0x1488/xray-core/proxy/blackhole"
 	"google.golang.org/protobuf/proto"
 )
 

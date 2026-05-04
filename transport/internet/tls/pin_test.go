@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/protocol/tls/cert"
+	"github.com/0x1488/xray-core/common"
+	"github.com/0x1488/xray-core/common/protocol/tls/cert"
 )
 
 func TestCalculateCertHash(t *testing.T) {

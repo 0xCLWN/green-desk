@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/xtls/xray-core/app/router"
-	"github.com/xtls/xray-core/common/errors"
-	"github.com/xtls/xray-core/common/geodata"
-	"github.com/xtls/xray-core/common/serial"
+	"github.com/0x1488/xray-core/app/router"
+	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0x1488/xray-core/common/geodata"
+	"github.com/0x1488/xray-core/common/serial"
 
 	"google.golang.org/protobuf/proto"
 )

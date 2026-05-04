@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"strings"
 
-	c "github.com/xtls/xray-core/common/ctx"
-	"github.com/xtls/xray-core/common/log"
-	"github.com/xtls/xray-core/common/serial"
+	c "github.com/0x1488/xray-core/common/ctx"
+	"github.com/0x1488/xray-core/common/log"
+	"github.com/0x1488/xray-core/common/serial"
 )
 
 const trim = len("github.com/xtls/xray-core/")

@@ -5,14 +5,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/buf"
-	"github.com/xtls/xray-core/common/dice"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/session"
-	"github.com/xtls/xray-core/common/signal"
-	"github.com/xtls/xray-core/transport"
-	"github.com/xtls/xray-core/transport/internet"
+	"github.com/0x1488/xray-core/common"
+	"github.com/0x1488/xray-core/common/buf"
+	"github.com/0x1488/xray-core/common/dice"
+	"github.com/0x1488/xray-core/common/net"
+	"github.com/0x1488/xray-core/common/session"
+	"github.com/0x1488/xray-core/common/signal"
+	"github.com/0x1488/xray-core/transport"
+	"github.com/0x1488/xray-core/transport/internet"
 )
 
 // Handler is an outbound connection that silently swallow the entire payload.

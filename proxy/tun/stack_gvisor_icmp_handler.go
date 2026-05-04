@@ -1,8 +1,8 @@
 package tun
 
 import (
-	"github.com/xtls/xray-core/common/errors"
-	tunicmp "github.com/xtls/xray-core/proxy/tun/icmp"
+	"github.com/0x1488/xray-core/common/errors"
+	tunicmp "github.com/0x1488/xray-core/proxy/tun/icmp"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"

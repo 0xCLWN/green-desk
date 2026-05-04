@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/xtls/xray-core/core"
-	"github.com/xtls/xray-core/main/commands/base"
+	"github.com/0x1488/xray-core/core"
+	"github.com/0x1488/xray-core/main/commands/base"
 )
 
 var cmdVersion = &base.Command{

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/session"
+	"github.com/0x1488/xray-core/common"
+	"github.com/0x1488/xray-core/common/net"
+	"github.com/0x1488/xray-core/common/session"
 )
 
 type version byte

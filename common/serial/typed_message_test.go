@@ -3,8 +3,8 @@ package serial_test
 import (
 	"testing"
 
-	. "github.com/xtls/xray-core/common/serial"
-	"github.com/xtls/xray-core/transport/internet/finalmask/header/custom"
+	. "github.com/0x1488/xray-core/common/serial"
+	"github.com/0x1488/xray-core/transport/internet/finalmask/header/custom"
 )
 
 func TestGetInstance(t *testing.T) {

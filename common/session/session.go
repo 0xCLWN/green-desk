@@ -5,12 +5,12 @@ import (
 	"context"
 	"math/rand"
 
-	c "github.com/xtls/xray-core/common/ctx"
-	"github.com/xtls/xray-core/common/errors"
-	"github.com/xtls/xray-core/common/geodata"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/protocol"
-	"github.com/xtls/xray-core/common/signal"
+	c "github.com/0x1488/xray-core/common/ctx"
+	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0x1488/xray-core/common/geodata"
+	"github.com/0x1488/xray-core/common/net"
+	"github.com/0x1488/xray-core/common/protocol"
+	"github.com/0x1488/xray-core/common/signal"
 )
 
 // NewID generates a new ID. The generated ID is high likely to be unique, but not cryptographically secure.

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	creflect "github.com/xtls/xray-core/common/reflect"
-	cserial "github.com/xtls/xray-core/common/serial"
-	"github.com/xtls/xray-core/main/commands/base"
-	"github.com/xtls/xray-core/main/confloader"
+	creflect "github.com/0x1488/xray-core/common/reflect"
+	cserial "github.com/0x1488/xray-core/common/serial"
+	"github.com/0x1488/xray-core/main/commands/base"
+	"github.com/0x1488/xray-core/main/confloader"
 )
 
 var cmdJson = &base.Command{

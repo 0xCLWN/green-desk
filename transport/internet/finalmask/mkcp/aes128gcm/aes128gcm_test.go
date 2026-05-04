@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xtls/xray-core/common/crypto"
+	"github.com/0x1488/xray-core/common/crypto"
 )
 
 func TestAes128GcmSealInPlace(t *testing.T) {

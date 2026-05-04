@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	outbound "github.com/xtls/xray-core/features/outbound"
+	outbound "github.com/0x1488/xray-core/features/outbound"
 )
 
 // OutboundManager is a mock of Manager interface

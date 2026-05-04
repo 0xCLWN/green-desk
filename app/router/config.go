@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/xtls/xray-core/common/errors"
-	"github.com/xtls/xray-core/features/outbound"
-	"github.com/xtls/xray-core/features/routing"
+	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0x1488/xray-core/features/outbound"
+	"github.com/0x1488/xray-core/features/routing"
 )
 
 type Rule struct {

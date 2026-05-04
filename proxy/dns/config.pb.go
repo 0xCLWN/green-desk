@@ -7,8 +7,8 @@
 package dns
 
 import (
-	geodata "github.com/xtls/xray-core/common/geodata"
-	net "github.com/xtls/xray-core/common/net"
+	geodata "github.com/0x1488/xray-core/common/geodata"
+	net "github.com/0x1488/xray-core/common/net"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
