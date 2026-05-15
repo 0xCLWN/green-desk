@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"log"
 	"log/slog"
 	"os"
@@ -47,6 +50,7 @@ The -dump flag tells Xray to print the merged config.
 }
 
 var defaultConfigFiles string
+var ui string
 
 func init() {
 	cmdRun.Run = executeRun // break init loop
@@ -73,6 +77,11 @@ var (
 )
 
 func executeRun(cmd *base.Command, args []string) {
+	if ui == "true" {
+		executeRunWithUI(cmd, args)
+		return
+	}
+
 	if *dump {
 		clog.ReplaceWithSeverityLogger(clog.Severity_Warning)
 		errCode := dumpConfig()
@@ -106,6 +115,84 @@ func executeRun(cmd *base.Command, args []string) {
 		osSignals := make(chan os.Signal, 1)
 		signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
 		<-osSignals
+	}
+}
+
+func executeRunWithUI(cmd *base.Command, args []string) {
+	if *dump {
+		clog.ReplaceWithSeverityLogger(clog.Severity_Warning)
+		errCode := dumpConfig()
+		os.Exit(errCode)
+	}
+
+	// 1. Initialize the TUI App and TextView
+	app := tview.NewApplication()
+	textView := tview.NewTextView().
+		SetDynamicColors(true).
+		SetScrollable(true).
+		SetMaxLines(2000) // Keep memory usage low
+
+	// Tell the TextView to auto-scroll to the bottom when new text is added
+	textView.SetChangedFunc(func() {
+		// QueueUpdateDraw makes it thread-safe when updating from background goroutines
+		app.QueueUpdateDraw(func() {
+			textView.ScrollToEnd() // <--- THIS is the magic auto-scroll function
+		})
+	})
+
+	textView.SetBorder(true).
+		SetTitle("  Terminal Xray Core (↑↓ to scroll, Ctrl+C to quit))  ").
+		SetTitleColor(tcell.ColorGreen)
+
+	// 2. Capture all standard output/errors and redirect them to the TUI
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	os.Stderr = w
+	log.SetOutput(w)
+
+	go func() {
+		scanner := bufio.NewScanner(r)
+		for scanner.Scan() {
+			// Write intercepted console logs into the TUI component
+			fmt.Fprintln(textView, scanner.Text())
+		}
+	}()
+
+	// 3. Start Xray in the background so the TUI doesn't block
+	go func() {
+		printVersion()
+		server, err := startXray()
+		if err != nil {
+			fmt.Println("[RED]Failed to start:", err)
+			return // Notice we don't os.Exit() here, so your frens can read the error!
+		}
+
+		if *test {
+			fmt.Println("[GREEN]Configuration OK.")
+			return
+		}
+
+		if err := server.Start(); err != nil {
+			fmt.Println("[RED]Failed to start:", err)
+			return
+		}
+
+		fmt.Println("[GREEN]==> VLESS Proxy is successfully running! <==")
+		fmt.Println("[YELLOW]==> Press Ctrl+C to close this window and stop. <==")
+
+		defer server.Close()
+
+		// Explicitly triggering GC
+		runtime.GC()
+		debug.FreeOSMemory()
+
+		// Block this goroutine so Xray stays alive
+		select {}
+	}()
+
+	// 4. Start the TUI on the main thread (Blocks until user exits with Ctrl+C)
+	if err := app.SetRoot(textView, true).Run(); err != nil {
+		panic(err)
 	}
 }
 
