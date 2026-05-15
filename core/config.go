@@ -1,6 +1,8 @@
 package core
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"slices"
 	"strings"
@@ -23,6 +25,7 @@ type ConfigFormat struct {
 type ConfigSource struct {
 	Name   string
 	Format string
+	Reader io.Reader
 }
 
 // ConfigLoader is a utility to load Xray config from external source.
@@ -124,6 +127,13 @@ func LoadConfig(formatName string, input interface{}) (*Config, error) {
 				f = formatName
 			}
 
+			var reader io.Reader
+			var value json.RawMessage
+			if err := json.Unmarshal([]byte(file), &value); err == nil {
+				reader = bytes.NewBuffer([]byte(file))
+				f = "json"
+			}
+
 			if f == "" {
 				return nil, errors.New("Failed to get format of ", file).AtWarning()
 			}
@@ -134,6 +144,7 @@ func LoadConfig(formatName string, input interface{}) (*Config, error) {
 			files[i] = &ConfigSource{
 				Name:   file,
 				Format: f,
+				Reader: reader,
 			}
 		}
 

@@ -36,16 +36,24 @@ func MergeConfigFromFiles(files []*core.ConfigSource) (string, error) {
 func mergeConfigs(files []*core.ConfigSource) (*conf.Config, error) {
 	cf := &conf.Config{}
 	for i, file := range files {
-		errors.LogInfo(context.Background(), "Reading config: ", file)
-		r, err := confloader.LoadConfig(file.Name)
-		if err != nil {
-			return nil, errors.New("failed to read config: ", file).Base(err)
+		var rdr io.Reader
+		if file.Reader != nil {
+			errors.LogInfo(context.Background(), "Reading config: ", file.Name)
+			rdr = file.Reader
+		} else {
+			errors.LogInfo(context.Background(), "Reading config: ", file)
+			var err error
+			rdr, err = confloader.LoadConfig(file.Name)
+			if err != nil {
+				return nil, errors.New("failed to read config: ", file).Base(err)
+			}
 		}
+
 		decoder := ReaderDecoderByFormat[file.Format]
 		if file.Format == "json" && UseStrictJSON {
 			decoder = DecodeJSONConfigStrict
 		}
-		c, err := decoder(r)
+		c, err := decoder(rdr)
 		if err != nil {
 			return nil, errors.New("failed to decode config: ", file).Base(err)
 		}

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path"
@@ -29,7 +31,8 @@ var cmdRun = &base.Command{
 Run Xray with config, the default command.
 
 The -config=file, -c=file flags set the config files for
-Xray. Multiple assign is accepted.
+Xray. Multiple assign is accepted. Keys (i.e. "vless://abcdefh123456#name")
+are mapped into a default config.
 
 The -confdir=dir flag sets a dir with multiple json config
 
@@ -42,6 +45,8 @@ without launching the server.
 The -dump flag tells Xray to print the merged config.
 	`,
 }
+
+var defaultConfigFiles string
 
 func init() {
 	cmdRun.Run = executeRun // break init loop
@@ -198,6 +203,10 @@ func getConfigFilePath(verbose bool) cmdarg.Arg {
 	if verbose {
 		log.Println("Using config from STDIN")
 	}
+	if defaultConfigFiles != "" {
+		slog.Info("Using default config", "file", defaultConfigFiles)
+		return cmdarg.Arg{defaultConfigFiles}
+	}
 	return cmdarg.Arg{"stdin:"}
 }
 
@@ -212,7 +221,7 @@ func getConfigFormat() string {
 func startXray() (core.Server, error) {
 	configFiles := getConfigFilePath(true)
 
-	c, err := core.LoadConfig(getConfigFormat(), configFiles)
+	c, err := core.LoadConfig(getConfigFormat(), interpretKeysAsConfigFiles(configFiles))
 	if err != nil {
 		return nil, errors.New("failed to load config files: [", configFiles.String(), "]").Base(err)
 	}
@@ -223,4 +232,23 @@ func startXray() (core.Server, error) {
 	}
 
 	return server, nil
+}
+
+func interpretKeysAsConfigFiles(args cmdarg.Arg) cmdarg.Arg {
+	for i, arg := range args {
+		if strings.HasPrefix(arg, "vless://") {
+			parsed, err := Parse(arg)
+			if err != nil {
+				slog.Error("Failed to parse key", "key", arg, "error", err)
+				continue
+			}
+			data, err := json.MarshalIndent(parsed, "", "  ")
+			if err != nil {
+				slog.Error("Failed to marshal key", "key", arg, "error", err)
+				continue
+			}
+			args[i] = string(data)
+		}
+	}
+	return args
 }
