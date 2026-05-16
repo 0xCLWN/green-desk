@@ -5,12 +5,14 @@
 *Requires Golang 1.26+, you could install it from here https://go.dev/doc/install*
 
 ```bash
-go run -ldflags='-X main.ui=true -X main.defaultPort=10808' github.com/0x1488/Xray-core/main -c 'vless://abc123#name' 
+go run -ldflags='-X main.ui=true -X main.defaultPort=10808' github.com/0x1488/Xray-core/main@latest -c 'vless://abc123#name' 
 ```
 
 ## Build Static Binary
 
 ```bash
+git clone https://github.com/0x1488/Xray-core
+cd Xray-core
 go build -ldflags='-w -s -X main.ui=true -X main.defaultPort=10808 -X main.defaultConfigFiles=vless://abc123#name' -o xray ./main
 ```
 
