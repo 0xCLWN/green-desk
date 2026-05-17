@@ -777,8 +777,8 @@ type LimitFallback struct {
 type REALITYConfig struct {
 	MasterKeyLog string          `json:"masterKeyLog"`
 	Show         bool            `json:"show"`
-	Target       json.RawMessage `json:"target"`
-	Dest         json.RawMessage `json:"dest"`
+	Target       json.RawMessage `json:"target,omitempty"`
+	Dest         json.RawMessage `json:"dest,omitempty"`
 	Type         string          `json:"type"`
 	Xver         uint64          `json:"xver"`
 	ServerNames  []string        `json:"serverNames"`
