@@ -9,6 +9,7 @@ import (
 
 	xnet "github.com/0x1488/xray-core/common/net"
 	"github.com/0x1488/xray-core/infra/conf"
+	xui "github.com/0x1488/xray-core/main/ui"
 )
 
 var defaultPort string
@@ -19,6 +20,15 @@ var defaultPortInt = func() int {
 	}
 	return 10808
 }()
+
+func parseName(deeplink string) string {
+	if idx := strings.LastIndex(deeplink, "#"); idx != -1 {
+		if name, err := url.PathUnescape(deeplink[idx+1:]); err == nil && name != "" {
+			return name
+		}
+	}
+	return ""
+}
 
 func Parse(deeplink string) (*conf.Config, error) {
 	if !strings.HasPrefix(deeplink, "vless://") {
@@ -86,6 +96,9 @@ func Parse(deeplink string) (*conf.Config, error) {
 
 	destOverride := conf.StringList{"http", "tls"}
 
+	stream.SocketSettings = &conf.SocketConfig{Mark: xui.XrayFWMark}
+	markOnly := &conf.StreamConfig{SocketSettings: &conf.SocketConfig{Mark: xui.XrayFWMark}}
+
 	return &conf.Config{
 		LogConfig:    &conf.LogConfig{LogLevel: "warning"},
 		DNSConfig:    buildDNSConfig(),
@@ -114,7 +127,7 @@ func Parse(deeplink string) (*conf.Config, error) {
 				Settings:      &vlessMsg,
 				StreamSetting: stream,
 			},
-			{Tag: "direct", Protocol: "freedom"},
+			{Tag: "direct", Protocol: "freedom", StreamSetting: markOnly},
 			{Tag: "block", Protocol: "blackhole"},
 		},
 	}, nil

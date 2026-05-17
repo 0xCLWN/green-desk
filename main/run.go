@@ -1,22 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
+	"io"
 	"log"
 	"log/slog"
 	"os"
-	"os/signal"
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
-	"runtime/debug"
+	"slices"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/0x1488/xray-core/common/cmdarg"
@@ -25,6 +20,7 @@ import (
 	"github.com/0x1488/xray-core/common/platform"
 	"github.com/0x1488/xray-core/core"
 	"github.com/0x1488/xray-core/main/commands/base"
+	xui "github.com/0x1488/xray-core/main/ui"
 )
 
 var cmdRun = &base.Command{
@@ -49,8 +45,11 @@ The -dump flag tells Xray to print the merged config.
 	`,
 }
 
-var defaultConfigFiles string
-var ui string
+var (
+	defaultConfigFiles string
+	defaultEnabled     string // "true" → auto-start proxy on launch
+	defaultSysProxy    string // "true" → also enable system-wide proxy on launch
+)
 
 func init() {
 	cmdRun.Run = executeRun // break init loop
@@ -58,7 +57,7 @@ func init() {
 }
 
 var (
-	configFiles cmdarg.Arg // "Config file for Xray.", the option is customed type, parse in main
+	configFiles cmdarg.Arg
 	configDir   string
 	dump        = cmdRun.Flag.Bool("dump", false, "Dump merged config only, without launching Xray server.")
 	test        = cmdRun.Flag.Bool("test", false, "Test config file only, without launching Xray server.")
@@ -71,129 +70,45 @@ var (
 		cmdRun.Flag.Var(&configFiles, "config", "Config path for Xray.")
 		cmdRun.Flag.Var(&configFiles, "c", "Short alias of -config")
 		cmdRun.Flag.StringVar(&configDir, "confdir", "", "A dir with multiple json config")
-
 		return true
 	}()
 )
 
-func executeRun(cmd *base.Command, args []string) {
-	if ui == "true" {
-		executeRunWithUI(cmd, args)
-		return
-	}
-
+func executeRun(_ *base.Command, _ []string) {
 	if *dump {
 		clog.ReplaceWithSeverityLogger(clog.Severity_Warning)
-		errCode := dumpConfig()
-		os.Exit(errCode)
+		os.Exit(dumpConfig())
 	}
-
-	printVersion()
-	server, err := startXray()
-	if err != nil {
-		fmt.Println("Failed to start:", err)
-		// Configuration error. Exit with a special value to prevent systemd from restarting.
-		os.Exit(23)
-	}
-
 	if *test {
+		printVersion()
+		if _, err := startXray(); err != nil {
+			fmt.Println("Failed to parse config:", err)
+			os.Exit(23)
+		}
 		fmt.Println("Configuration OK.")
 		os.Exit(0)
 	}
 
-	if err := server.Start(); err != nil {
-		fmt.Println("Failed to start:", err)
-		os.Exit(-1)
-	}
-	defer server.Close()
-
-	// Explicitly triggering GC to remove garbage from config loading.
-	runtime.GC()
-	debug.FreeOSMemory()
-
-	{
-		osSignals := make(chan os.Signal, 1)
-		signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
-		<-osSignals
-	}
-}
-
-func executeRunWithUI(cmd *base.Command, args []string) {
-	if *dump {
-		clog.ReplaceWithSeverityLogger(clog.Severity_Warning)
-		errCode := dumpConfig()
-		os.Exit(errCode)
-	}
-
-	// 1. Initialize the TUI App and TextView
-	app := tview.NewApplication()
-	textView := tview.NewTextView().
-		SetDynamicColors(true).
-		SetScrollable(true).
-		SetMaxLines(2000) // Keep memory usage low
-
-	// Tell the TextView to auto-scroll to the bottom when new text is added
-	textView.SetChangedFunc(func() {
-		// QueueUpdateDraw makes it thread-safe when updating from background goroutines
-		app.QueueUpdateDraw(func() {
-			textView.ScrollToEnd() // <--- THIS is the magic auto-scroll function
-		})
+	xui.Start(&xui.Deps{
+		ConfigFiles:  &configFiles,
+		DefaultKey:   defaultConfigFiles,
+		Port:         &defaultPortInt,
+		AutoEnable:   defaultEnabled == "true",
+		AutoSysProxy: defaultSysProxy == "true",
+		StartXray: func() (io.Closer, error) {
+			srv, err := startXray()
+			if err != nil {
+				return nil, err
+			}
+			if err := srv.Start(); err != nil {
+				return nil, err
+			}
+			return srv, nil
+		},
+		ValidateKey:  func(key string) error { _, err := Parse(key); return err },
+		ParseName:    parseName,
+		PrintVersion: printVersion,
 	})
-
-	textView.SetBorder(true).
-		SetTitle("  Terminal Xray Core (↑↓ to scroll, Ctrl+C to quit))  ").
-		SetTitleColor(tcell.ColorGreen)
-
-	// 2. Capture all standard output/errors and redirect them to the TUI
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	os.Stderr = w
-	log.SetOutput(w)
-
-	go func() {
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			// Write intercepted console logs into the TUI component
-			fmt.Fprintln(textView, scanner.Text())
-		}
-	}()
-
-	// 3. Start Xray in the background so the TUI doesn't block
-	go func() {
-		printVersion()
-		server, err := startXray()
-		if err != nil {
-			fmt.Println("[RED]Failed to start:", err)
-			return // Notice we don't os.Exit() here, so your frens can read the error!
-		}
-
-		if *test {
-			fmt.Println("[GREEN]Configuration OK.")
-			return
-		}
-
-		if err := server.Start(); err != nil {
-			fmt.Println("[RED]Failed to start:", err)
-			return
-		}
-
-		fmt.Println("[GREEN]==> VLESS Proxy is successfully running! <==")
-		fmt.Println("[YELLOW]==> Press Ctrl+C to close this window and stop. <==")
-
-		defer server.Close()
-
-		// Explicitly triggering GC
-		runtime.GC()
-		debug.FreeOSMemory()
-
-		// Block this goroutine so Xray stays alive
-		select {}
-	}()
-
-	// 4. Start the TUI on the main thread (Blocks until user exits with Ctrl+C)
-	if err := app.SetRoot(textView, true).Run(); err != nil {
-		panic(err)
-	}
 }
 
 func dumpConfig() int {
@@ -322,6 +237,7 @@ func startXray() (core.Server, error) {
 }
 
 func interpretKeysAsConfigFiles(args cmdarg.Arg) cmdarg.Arg {
+	args = slices.Clone(args)
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "vless://") {
 			parsed, err := Parse(arg)
