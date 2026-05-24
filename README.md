@@ -66,13 +66,7 @@ CGO_ENABLED=1 go build -tags systray \
   -o xray-tray ./main
 ```
 
-System-wide proxy (TUN mode) also requires `tun2socks`:
-
-```sh
-go install github.com/xjasonlyu/tun2socks/v2@latest
-```
-
-The binary needs `CAP_NET_ADMIN` to create a TUN interface. Either run with `sudo`, or grant it once:
+The binary needs `CAP_NET_ADMIN` to create a TUN interface for system-wide proxy. Either run with `sudo`, or grant it once:
 
 ```sh
 sudo setcap cap_net_admin+ep ./xray-tray
@@ -180,6 +174,24 @@ CGO_ENABLED=0 go build \
 
 sudo setcap cap_net_admin+ep ./xray-tray
 ./xray-tray
+```
+
+---
+
+## Troubleshooting
+
+### Linux — no internet after a crash
+
+If the process is killed hard (SIGKILL, power loss) while system proxy is active, the TUN interface disappears automatically but the policy routing rules may linger and black-hole traffic. One command fixes it:
+
+```sh
+sudo ip rule del priority 1000; sudo ip rule del priority 100; true
+```
+
+If `tun0` somehow stuck around too:
+
+```sh
+sudo ip link del tun0
 ```
 
 ---
