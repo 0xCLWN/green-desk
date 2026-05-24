@@ -49,6 +49,7 @@ var (
 	defaultConfigFiles string
 	defaultEnabled     string // "true" → auto-start proxy on launch
 	defaultSysProxy    string // "true" → also enable system-wide proxy on launch
+	defaultStartup     string // "true" → register as login item on launch (macOS)
 )
 
 func init() {
@@ -95,6 +96,7 @@ func executeRun(_ *base.Command, _ []string) {
 		Port:         &defaultPortInt,
 		AutoEnable:   defaultEnabled == "true",
 		AutoSysProxy: defaultSysProxy == "true",
+		AutoStartup:  defaultStartup == "true",
 		StartXray: func() (io.Closer, error) {
 			srv, err := startXray()
 			if err != nil {

@@ -91,11 +91,12 @@ func pngToICO(pngData []byte, size int) []byte {
 }
 
 var (
-	iconOn  = circleIcon(34, 197, 94)   // green-500
-	iconOff = circleIcon(156, 163, 175) // gray-400
+	iconOn   = circleIcon(34, 197, 94)   // green-500
+	iconDown = circleIcon(239, 68, 68)   // red-500
+	iconOff  = circleIcon(156, 163, 175) // gray-400
 )
 
-// mSysProxyItem is set in onReady when running on Linux; nil elsewhere.
+// mSysProxyItem is non-nil when SystemProxyAvailable() returns true.
 var mSysProxyItem *systray.MenuItem
 
 func Start(d *Deps) {
@@ -108,6 +109,9 @@ func Start(d *Deps) {
 	}
 	defer releaseInstanceLock()
 
+	if d.AutoStartup {
+		_ = EnableStartup()
+	}
 	CleanupStaleProxy(*d.Port)
 	systray.Run(func() { onReady(d) }, nil)
 }
@@ -172,17 +176,68 @@ func onReady(d *Deps) {
 
 	var sysProxyCh <-chan struct{}
 	if SystemProxyAvailable() {
-		mSysProxyItem = systray.AddMenuItemCheckbox("System Proxy", "Route all traffic through Xray via TUN", false)
-		sysProxyCh = mSysProxyItem.ClickedCh
+		tooltip := "Route all traffic through Xray via TUN"
+		if !NetAdminAvailable() {
+			tooltip = "Requires root or CAP_NET_ADMIN — run with sudo or: sudo setcap cap_net_admin+ep ./xray-tray"
+		}
+		mSysProxyItem = systray.AddMenuItemCheckbox("System Proxy", tooltip, false)
+		if !NetAdminAvailable() {
+			mSysProxyItem.Disable()
+		} else {
+			sysProxyCh = mSysProxyItem.ClickedCh
+		}
 	}
+
+	mStartup := systray.AddMenuItemCheckbox("Launch at Login", "Start Xray automatically at login", StartupEnabled())
 	systray.AddSeparator()
 
 	mQuit := systray.AddMenuItem("Quit", "Quit Xray")
 
-	var activeSrv io.Closer
+	var (
+		activeSrv       io.Closer
+		stopHealth      func()
+		sysProxyAutoOff bool // sys proxy was auto-disabled due to upstream being down
+	)
+
+	doStop := func() {
+		if stopHealth != nil {
+			stopHealth()
+			stopHealth = nil
+		}
+		sysProxyAutoOff = false
+		stopSrv(&activeSrv, d, mStatus, mEnable)
+	}
+
+	doLaunch := func() bool {
+		if !launchSrv(&activeSrv, d, mStatus, mEnable) {
+			return false
+		}
+		stopHealth = startHealthWatch(*d.Port,
+			func() { // upstream went down
+				systray.SetIcon(iconDown)
+				mStatus.SetTitle("● Upstream down")
+				systray.SetTooltip("Xray — Upstream down")
+				if mSysProxyItem != nil && mSysProxyItem.Checked() {
+					DisableSystemProxy()
+					mSysProxyItem.Uncheck()
+					sysProxyAutoOff = true
+				}
+			},
+			func() { // upstream recovered
+				setEnabled(d, mStatus, mEnable)
+				if sysProxyAutoOff {
+					if EnableSystemProxy(*d.Port) == nil && mSysProxyItem != nil {
+						mSysProxyItem.Check()
+					}
+					sysProxyAutoOff = false
+				}
+			},
+		)
+		return true
+	}
 
 	d.applyDefaults(
-		func() bool { return launchSrv(&activeSrv, d, mStatus, mEnable) },
+		doLaunch,
 		func() {
 			if err := EnableSystemProxy(*d.Port); err == nil && mSysProxyItem != nil {
 				mSysProxyItem.Check()
@@ -195,6 +250,9 @@ func onReady(d *Deps) {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 		<-sig
+		if stopHealth != nil {
+			stopHealth()
+		}
 		DisableSystemProxy()
 		if activeSrv != nil {
 			activeSrv.Close()
@@ -206,9 +264,9 @@ func onReady(d *Deps) {
 		select {
 		case <-mEnable.ClickedCh:
 			if activeSrv != nil {
-				stopSrv(&activeSrv, d, mStatus, mEnable)
+				doStop()
 			} else {
-				launchSrv(&activeSrv, d, mStatus, mEnable)
+				doLaunch()
 			}
 
 		case <-mChangeKey.ClickedCh:
@@ -230,8 +288,8 @@ func onReady(d *Deps) {
 			}
 			*d.ConfigFiles = cmdarg.Arg{result}
 			if activeSrv != nil {
-				stopSrv(&activeSrv, d, mStatus, mEnable)
-				launchSrv(&activeSrv, d, mStatus, mEnable)
+				doStop()
+				doLaunch()
 			}
 
 		case <-mSocks.ClickedCh:
@@ -251,14 +309,15 @@ func onReady(d *Deps) {
 			*d.Port = port
 			mSocks.SetTitle(fmt.Sprintf("SOCKS5 Port: %d", port))
 			if activeSrv != nil {
-				stopSrv(&activeSrv, d, mStatus, mEnable)
-				launchSrv(&activeSrv, d, mStatus, mEnable)
+				doStop()
+				doLaunch()
 			}
 
-		case <-sysProxyCh: // nil on non-Linux — never fires
+		case <-sysProxyCh: // nil when SystemProxyAvailable() is false — never fires
 			if mSysProxyItem.Checked() {
 				mSysProxyItem.Uncheck()
 				DisableSystemProxy()
+				sysProxyAutoOff = false
 			} else {
 				if activeSrv == nil {
 					_ = zenity.Error("Start the proxy first, then enable System Proxy.", zenity.Title("Xray"))
@@ -271,7 +330,25 @@ func onReady(d *Deps) {
 				mSysProxyItem.Check()
 			}
 
+		case <-mStartup.ClickedCh:
+			if mStartup.Checked() {
+				if err := DisableStartup(); err != nil {
+					_ = zenity.Error(err.Error(), zenity.Title("Xray — Launch at Login"))
+				} else {
+					mStartup.Uncheck()
+				}
+			} else {
+				if err := EnableStartup(); err != nil {
+					_ = zenity.Error(err.Error(), zenity.Title("Xray — Launch at Login"))
+				} else {
+					mStartup.Check()
+				}
+			}
+
 		case <-mQuit.ClickedCh:
+			if stopHealth != nil {
+				stopHealth()
+			}
 			DisableSystemProxy()
 			if activeSrv != nil {
 				activeSrv.Close()

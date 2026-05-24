@@ -74,6 +74,7 @@ go build -tags systray \
 | `main.defaultPort`        | `10808` | SOCKS5 listen port                                        |
 | `main.defaultEnabled`     | —       | `true` = start proxy on launch                            |
 | `main.defaultSysProxy`    | —       | `true` = start proxy + enable system-wide proxy on launch |
+| `main.defaultStartup`     | —       | `true` = register as a login item on launch (macOS)       |
 
 ## Runtime
 

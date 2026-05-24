@@ -21,6 +21,8 @@ type Deps struct {
 	AutoEnable bool
 	// AutoSysProxy also enables system-wide proxy on launch; implies AutoEnable.
 	AutoSysProxy bool
+	// AutoStartup registers the binary as a login item on launch (macOS only).
+	AutoStartup bool
 
 	// StartXray creates and starts the proxy server; returns a handle to close it.
 	StartXray    func() (io.Closer, error)

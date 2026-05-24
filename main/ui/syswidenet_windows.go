@@ -30,6 +30,7 @@ func openInternetSettings(access uint32) (registry.Key, error) {
 }
 
 func SystemProxyAvailable() bool { return true }
+func NetAdminAvailable() bool    { return true }
 
 func EnableSystemProxy(socksPort int) error {
 	k, err := openInternetSettings(registry.SET_VALUE)

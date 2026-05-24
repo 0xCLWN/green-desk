@@ -4,6 +4,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -23,6 +24,13 @@ var sysTun2socksCmd *exec.Cmd
 // tun2socks.  Xray's own sockets carry fwmark=XrayFWMark and are routed via
 // the main table (real gateway), breaking the forwarding loop.
 func EnableSystemProxy(socksPort int) error {
+	if !NetAdminAvailable() {
+		return fmt.Errorf(
+			"system proxy requires root or CAP_NET_ADMIN\n\n" +
+				"Run with sudo, or grant the capability once:\n" +
+				"  sudo setcap cap_net_admin+ep ./xray-tray",
+		)
+	}
 	if _, err := exec.LookPath("tun2socks"); err != nil {
 		return fmt.Errorf(
 			"tun2socks not found in PATH\n\n" +
@@ -87,6 +95,29 @@ func DisableSystemProxy() {
 }
 
 func SystemProxyAvailable() bool { return true }
+
+func NetAdminAvailable() bool {
+	if os.Getuid() == 0 {
+		return true
+	}
+	data, err := os.ReadFile("/proc/self/status")
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if !strings.HasPrefix(line, "CapEff:") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			return false
+		}
+		var caps uint64
+		fmt.Sscanf(fields[1], "%x", &caps)
+		return caps&(1<<12) != 0 // CAP_NET_ADMIN = 12
+	}
+	return false
+}
 
 // CleanupStaleProxy removes any TUN interface and routing rules left over from
 // a previous run that crashed or was killed.  The TUN vanishes on reboot anyway,

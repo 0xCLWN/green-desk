@@ -83,7 +83,8 @@ func DisableSystemProxy() {
 	}
 }
 
-func SystemProxyAvailable() bool { return true }
+func SystemProxyAvailable() bool  { return true }
+func NetAdminAvailable() bool     { return true }
 
 // CleanupStaleProxy runs at startup and removes any proxy settings that were
 // left behind by a previous run that crashed, was force-killed, or lost power.
