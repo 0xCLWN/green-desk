@@ -23,6 +23,7 @@ require (
 	github.com/sagernet/sing-shadowsocks v0.2.7
 	github.com/stretchr/testify v1.11.1
 	github.com/vishvananda/netlink v1.3.1
+	github.com/xjasonlyu/tun2socks/v2 v2.6.0-beta
 	github.com/xtls/reality v0.0.0-20260322125925-9234c772ba8f
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.50.0
@@ -35,7 +36,7 @@ require (
 	golang.zx2c4.com/wireguard/windows v1.0.1
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
-	gvisor.dev/gvisor v0.0.0-20260122175437-89a5d21be8f0
+	gvisor.dev/gvisor v0.0.0-20250503011706-39ed1f5ac29c
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.4.1
 )
@@ -66,7 +67,6 @@ require (
 	github.com/josephspurrier/goversioninfo v1.4.1 // indirect
 	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -74,9 +74,7 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
-	github.com/xjasonlyu/tun2socks/v2 v2.6.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/image v0.20.0 // indirect
