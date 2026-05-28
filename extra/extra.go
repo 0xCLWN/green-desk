@@ -1,4 +1,4 @@
-package main
+package extra
 
 import (
 	"encoding/json"
@@ -12,23 +12,20 @@ import (
 	xui "github.com/0x1488/xray-core/main/ui"
 )
 
-var defaultPort string
-
-var defaultPortInt = func() int {
-	if result, err := strconv.Atoi(defaultPort); err == nil {
-		return result
-	}
-	return 10808
-}()
-
-func parseName(deeplink string) string {
-	if idx := strings.LastIndex(deeplink, "#"); idx != -1 {
-		if name, err := url.PathUnescape(deeplink[idx+1:]); err == nil && name != "" {
-			return name
+var (
+	Port    string
+	PortInt int = func() int {
+		if result, err := strconv.Atoi(Port); err == nil {
+			return result
 		}
-	}
-	return ""
-}
+		return 10808
+	}()
+
+	Keys      string
+	Enabled   string // "true" → auto-start proxy on launch
+	SysProxy  string // "true" → also enable system-wide proxy on launch
+	OnStartup string // "true" → register as login item on launch (macOS)
+)
 
 func Parse(deeplink string) (*conf.Config, error) {
 	if !strings.HasPrefix(deeplink, "vless://") {
@@ -106,7 +103,7 @@ func Parse(deeplink string) (*conf.Config, error) {
 		InboundConfigs: []conf.InboundDetourConfig{
 			{
 				Protocol: "socks",
-				PortList: portList(defaultPortInt),
+				PortList: portList(PortInt),
 				ListenOn: address("127.0.0.1"),
 				Settings: &socksMsg,
 				SniffingConfig: &conf.SniffingConfig{
@@ -116,7 +113,7 @@ func Parse(deeplink string) (*conf.Config, error) {
 			},
 			{
 				Protocol: "http",
-				PortList: portList(defaultPortInt + 1),
+				PortList: portList(PortInt + 1),
 				ListenOn: address("127.0.0.1"),
 			},
 		},

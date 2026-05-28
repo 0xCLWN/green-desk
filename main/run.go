@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0x1488/xray-core/extra"
 	"io"
 	"log"
 	"log/slog"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -44,13 +46,6 @@ without launching the server.
 The -dump flag tells Xray to print the merged config.
 	`,
 }
-
-var (
-	defaultConfigFiles string
-	defaultEnabled     string // "true" → auto-start proxy on launch
-	defaultSysProxy    string // "true" → also enable system-wide proxy on launch
-	defaultStartup     string // "true" → register as login item on launch (macOS)
-)
 
 func init() {
 	cmdRun.Run = executeRun // break init loop
@@ -92,11 +87,11 @@ func executeRun(_ *base.Command, _ []string) {
 
 	xui.Start(&xui.Deps{
 		ConfigFiles:  &configFiles,
-		DefaultKey:   defaultConfigFiles,
-		Port:         &defaultPortInt,
-		AutoEnable:   defaultEnabled == "true",
-		AutoSysProxy: defaultSysProxy == "true",
-		AutoStartup:  defaultStartup == "true",
+		DefaultKey:   extra.Keys,
+		Port:         &extra.PortInt,
+		AutoEnable:   extra.Enabled == "true",
+		AutoSysProxy: extra.SysProxy == "true",
+		AutoStartup:  extra.OnStartup == "true",
 		StartXray: func() (io.Closer, error) {
 			srv, err := startXray()
 			if err != nil {
@@ -107,7 +102,7 @@ func executeRun(_ *base.Command, _ []string) {
 			}
 			return srv, nil
 		},
-		ValidateKey:  func(key string) error { _, err := Parse(key); return err },
+		ValidateKey:  func(key string) error { _, err := extra.Parse(key); return err },
 		ParseName:    parseName,
 		PrintVersion: printVersion,
 	})
@@ -207,9 +202,9 @@ func getConfigFilePath(verbose bool) cmdarg.Arg {
 	if verbose {
 		log.Println("Using config from STDIN")
 	}
-	if defaultConfigFiles != "" {
-		slog.Info("Using default config", "file", defaultConfigFiles)
-		return cmdarg.Arg{defaultConfigFiles}
+	if extra.Keys != "" {
+		slog.Info("Using default config", "file", extra.Keys)
+		return cmdarg.Arg{extra.Keys}
 	}
 	return cmdarg.Arg{"stdin:"}
 }
@@ -242,7 +237,7 @@ func interpretKeysAsConfigFiles(args cmdarg.Arg) cmdarg.Arg {
 	args = slices.Clone(args)
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "vless://") {
-			parsed, err := Parse(arg)
+			parsed, err := extra.Parse(arg)
 			if err != nil {
 				slog.Error("Failed to parse key", "key", arg, "error", err)
 				continue
@@ -256,4 +251,13 @@ func interpretKeysAsConfigFiles(args cmdarg.Arg) cmdarg.Arg {
 		}
 	}
 	return args
+}
+
+func parseName(deeplink string) string {
+	if idx := strings.LastIndex(deeplink, "#"); idx != -1 {
+		if name, err := url.PathUnescape(deeplink[idx+1:]); err == nil && name != "" {
+			return name
+		}
+	}
+	return ""
 }
