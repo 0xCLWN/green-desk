@@ -8,10 +8,10 @@ import (
 	"slices"
 	"time"
 
-	utls "github.com/refraction-networking/utls"
 	"github.com/0x1488/xray-core/common/buf"
 	"github.com/0x1488/xray-core/common/net"
 	"github.com/0x1488/xray-core/common/utils"
+	utls "github.com/refraction-networking/utls"
 )
 
 type Interface interface {
