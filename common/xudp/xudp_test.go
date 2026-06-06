@@ -3,9 +3,9 @@ package xudp
 import (
 	"testing"
 
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/buf"
-	"github.com/0x1488/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/buf"
+	"github.com/0xCLWN/xray-core/common/net"
 )
 
 func TestXudpReadWrite(t *testing.T) {

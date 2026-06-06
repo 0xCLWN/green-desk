@@ -10,10 +10,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/0x1488/xray-core/common/buf"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/signal"
-	"github.com/0x1488/xray-core/common/signal/semaphore"
+	"github.com/0xCLWN/xray-core/common/buf"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/signal"
+	"github.com/0xCLWN/xray-core/common/signal/semaphore"
 )
 
 var (

@@ -7,7 +7,7 @@
 package vmess
 
 import (
-	protocol "github.com/0x1488/xray-core/common/protocol"
+	protocol "github.com/0xCLWN/xray-core/common/protocol"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/0x1488/xray-core/transport/internet/finalmask/mkcp/original"
+	"github.com/0xCLWN/xray-core/transport/internet/finalmask/mkcp/original"
 )
 
 func TestSimpleSealInPlace(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/0x1488/xray-core/common/platform"
-	"github.com/0x1488/xray-core/common/signal/done"
-	"github.com/0x1488/xray-core/common/signal/semaphore"
+	"github.com/0xCLWN/xray-core/common/platform"
+	"github.com/0xCLWN/xray-core/common/signal/done"
+	"github.com/0xCLWN/xray-core/common/signal/semaphore"
 )
 
 // Writer is the interface for writing logs.

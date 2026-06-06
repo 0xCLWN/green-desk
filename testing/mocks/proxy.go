@@ -9,11 +9,11 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	net "github.com/0x1488/xray-core/common/net"
-	routing "github.com/0x1488/xray-core/features/routing"
-	transport "github.com/0x1488/xray-core/transport"
-	internet "github.com/0x1488/xray-core/transport/internet"
-	"github.com/0x1488/xray-core/transport/internet/stat"
+	net "github.com/0xCLWN/xray-core/common/net"
+	routing "github.com/0xCLWN/xray-core/features/routing"
+	transport "github.com/0xCLWN/xray-core/transport"
+	internet "github.com/0xCLWN/xray-core/transport/internet"
+	"github.com/0xCLWN/xray-core/transport/internet/stat"
 )
 
 // ProxyInbound is a mock of Inbound interface

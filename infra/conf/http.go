@@ -3,10 +3,10 @@ package conf
 import (
 	"encoding/json"
 
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/protocol"
-	"github.com/0x1488/xray-core/common/serial"
-	"github.com/0x1488/xray-core/proxy/http"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/protocol"
+	"github.com/0xCLWN/xray-core/common/serial"
+	"github.com/0xCLWN/xray-core/proxy/http"
 	"google.golang.org/protobuf/proto"
 )
 

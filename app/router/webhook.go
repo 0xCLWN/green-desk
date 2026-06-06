@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/features/routing"
-	routing_session "github.com/0x1488/xray-core/features/routing/session"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/features/routing"
+	routing_session "github.com/0xCLWN/xray-core/features/routing/session"
 )
 
 // parseURL splits a webhook URL into an HTTP URL and an optional Unix socket

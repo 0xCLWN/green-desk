@@ -7,8 +7,8 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/platform"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/platform"
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"

@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0x1488/xray-core/common/protocol"
+	"github.com/0xCLWN/xray-core/common/protocol"
 
-	handlerService "github.com/0x1488/xray-core/app/proxyman/command"
-	cserial "github.com/0x1488/xray-core/common/serial"
+	handlerService "github.com/0xCLWN/xray-core/app/proxyman/command"
+	cserial "github.com/0xCLWN/xray-core/common/serial"
 
-	"github.com/0x1488/xray-core/core"
-	"github.com/0x1488/xray-core/infra/conf"
-	"github.com/0x1488/xray-core/infra/conf/serial"
-	"github.com/0x1488/xray-core/proxy/shadowsocks"
-	"github.com/0x1488/xray-core/proxy/shadowsocks_2022"
-	"github.com/0x1488/xray-core/proxy/trojan"
-	vlessin "github.com/0x1488/xray-core/proxy/vless/inbound"
-	vmessin "github.com/0x1488/xray-core/proxy/vmess/inbound"
+	"github.com/0xCLWN/xray-core/core"
+	"github.com/0xCLWN/xray-core/infra/conf"
+	"github.com/0xCLWN/xray-core/infra/conf/serial"
+	"github.com/0xCLWN/xray-core/proxy/shadowsocks"
+	"github.com/0xCLWN/xray-core/proxy/shadowsocks_2022"
+	"github.com/0xCLWN/xray-core/proxy/trojan"
+	vlessin "github.com/0xCLWN/xray-core/proxy/vless/inbound"
+	vmessin "github.com/0xCLWN/xray-core/proxy/vmess/inbound"
 
-	"github.com/0x1488/xray-core/main/commands/base"
+	"github.com/0xCLWN/xray-core/main/commands/base"
 )
 
 var cmdAddInboundUsers = &base.Command{

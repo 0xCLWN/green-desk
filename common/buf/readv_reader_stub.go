@@ -7,7 +7,7 @@ import (
 	"io"
 	"syscall"
 
-	"github.com/0x1488/xray-core/features/stats"
+	"github.com/0xCLWN/xray-core/features/stats"
 )
 
 const useReadv = false

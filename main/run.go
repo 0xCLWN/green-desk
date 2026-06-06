@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0x1488/xray-core/extra"
+	"github.com/0xCLWN/xray-core/extra"
 	"io"
 	"log"
 	"log/slog"
@@ -16,13 +16,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0x1488/xray-core/common/cmdarg"
-	"github.com/0x1488/xray-core/common/errors"
-	clog "github.com/0x1488/xray-core/common/log"
-	"github.com/0x1488/xray-core/common/platform"
-	"github.com/0x1488/xray-core/core"
-	"github.com/0x1488/xray-core/main/commands/base"
-	xui "github.com/0x1488/xray-core/main/ui"
+	"github.com/0xCLWN/xray-core/common/cmdarg"
+	"github.com/0xCLWN/xray-core/common/errors"
+	clog "github.com/0xCLWN/xray-core/common/log"
+	"github.com/0xCLWN/xray-core/common/platform"
+	"github.com/0xCLWN/xray-core/core"
+	"github.com/0xCLWN/xray-core/main/commands/base"
+	xui "github.com/0xCLWN/xray-core/main/ui"
 )
 
 var cmdRun = &base.Command{

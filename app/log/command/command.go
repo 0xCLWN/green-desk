@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 
-	"github.com/0x1488/xray-core/app/log"
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/core"
+	"github.com/0xCLWN/xray-core/app/log"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/core"
 	grpc "google.golang.org/grpc"
 )
 

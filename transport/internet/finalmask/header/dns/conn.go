@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"net"
 
-	"github.com/0x1488/xray-core/common/dice"
-	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/dice"
+	"github.com/0xCLWN/xray-core/common/errors"
 )
 
 func packDomainName(s string, msg []byte) (off1 int, err error) {

@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"net"
 
-	"github.com/0x1488/xray-core/common/dice"
+	"github.com/0xCLWN/xray-core/common/dice"
 )
 
 type wechat struct {

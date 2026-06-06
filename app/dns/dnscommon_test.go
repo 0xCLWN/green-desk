@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/miekg/dns"
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/net"
-	dns_feature "github.com/0x1488/xray-core/features/dns"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/net"
+	dns_feature "github.com/0xCLWN/xray-core/features/dns"
 	"golang.org/x/net/dns/dnsmessage"
 )
 

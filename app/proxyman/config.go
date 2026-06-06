@@ -1,8 +1,8 @@
 package proxyman
 
 import (
-	"github.com/0x1488/xray-core/common/geodata"
-	"github.com/0x1488/xray-core/common/session"
+	"github.com/0xCLWN/xray-core/common/geodata"
+	"github.com/0xCLWN/xray-core/common/session"
 )
 
 func BuildSniffingRequest(config *SniffingConfig) (session.SniffingRequest, error) {

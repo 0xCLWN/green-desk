@@ -22,7 +22,7 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/ncruces/zenity"
 
-	"github.com/0x1488/xray-core/common/cmdarg"
+	"github.com/0xCLWN/xray-core/common/cmdarg"
 )
 
 func circleIcon(r, g, b uint8) []byte {

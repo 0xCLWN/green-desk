@@ -5,11 +5,11 @@ import (
 	"sync"
 
 	"github.com/robfig/cron/v3"
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/errors"
-	commongeodata "github.com/0x1488/xray-core/common/geodata"
-	"github.com/0x1488/xray-core/core"
-	"github.com/0x1488/xray-core/features/routing"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/errors"
+	commongeodata "github.com/0xCLWN/xray-core/common/geodata"
+	"github.com/0xCLWN/xray-core/core"
+	"github.com/0xCLWN/xray-core/features/routing"
 )
 
 type Instance struct {

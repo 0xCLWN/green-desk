@@ -1,9 +1,9 @@
 package conf
 
 import (
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/net"
-	"github.com/0x1488/xray-core/proxy/dokodemo"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/proxy/dokodemo"
 	"google.golang.org/protobuf/proto"
 )
 

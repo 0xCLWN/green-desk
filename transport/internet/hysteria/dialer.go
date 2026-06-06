@@ -14,17 +14,17 @@ import (
 
 	"github.com/apernet/quic-go"
 	"github.com/apernet/quic-go/http3"
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/net"
-	"github.com/0x1488/xray-core/common/net/cnc"
-	"github.com/0x1488/xray-core/transport/internet"
-	"github.com/0x1488/xray-core/transport/internet/finalmask"
-	"github.com/0x1488/xray-core/transport/internet/hysteria/congestion"
-	"github.com/0x1488/xray-core/transport/internet/hysteria/congestion/bbr"
-	"github.com/0x1488/xray-core/transport/internet/hysteria/udphop"
-	"github.com/0x1488/xray-core/transport/internet/stat"
-	"github.com/0x1488/xray-core/transport/internet/tls"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/common/net/cnc"
+	"github.com/0xCLWN/xray-core/transport/internet"
+	"github.com/0xCLWN/xray-core/transport/internet/finalmask"
+	"github.com/0xCLWN/xray-core/transport/internet/hysteria/congestion"
+	"github.com/0xCLWN/xray-core/transport/internet/hysteria/congestion/bbr"
+	"github.com/0xCLWN/xray-core/transport/internet/hysteria/udphop"
+	"github.com/0xCLWN/xray-core/transport/internet/stat"
+	"github.com/0xCLWN/xray-core/transport/internet/tls"
 )
 
 type client struct {

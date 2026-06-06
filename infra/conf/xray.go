@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/0x1488/xray-core/app/dispatcher"
-	"github.com/0x1488/xray-core/app/proxyman"
-	"github.com/0x1488/xray-core/app/stats"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/geodata"
-	"github.com/0x1488/xray-core/common/net"
-	"github.com/0x1488/xray-core/common/serial"
-	core "github.com/0x1488/xray-core/core"
-	"github.com/0x1488/xray-core/transport/internet"
+	"github.com/0xCLWN/xray-core/app/dispatcher"
+	"github.com/0xCLWN/xray-core/app/proxyman"
+	"github.com/0xCLWN/xray-core/app/stats"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/geodata"
+	"github.com/0xCLWN/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/common/serial"
+	core "github.com/0xCLWN/xray-core/core"
+	"github.com/0xCLWN/xray-core/transport/internet"
 )
 
 var (

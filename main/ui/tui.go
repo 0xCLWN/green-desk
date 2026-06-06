@@ -18,7 +18,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/0x1488/xray-core/common/cmdarg"
+	"github.com/0xCLWN/xray-core/common/cmdarg"
 )
 
 func Start(d *Deps) {

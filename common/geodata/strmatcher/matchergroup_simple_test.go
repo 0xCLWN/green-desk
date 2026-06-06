@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/0x1488/xray-core/common"
-	. "github.com/0x1488/xray-core/common/geodata/strmatcher"
+	"github.com/0xCLWN/xray-core/common"
+	. "github.com/0xCLWN/xray-core/common/geodata/strmatcher"
 )
 
 func TestSimpleMatcherGroup(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/proxy/hysteria/account"
-	"github.com/0x1488/xray-core/transport/internet"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/proxy/hysteria/account"
+	"github.com/0xCLWN/xray-core/transport/internet"
 )
 
 const (

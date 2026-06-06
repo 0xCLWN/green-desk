@@ -3,8 +3,8 @@ package protocol
 import (
 	"runtime"
 
-	"github.com/0x1488/xray-core/common/bitmask"
-	"github.com/0x1488/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/common/bitmask"
+	"github.com/0xCLWN/xray-core/common/net"
 	"golang.org/x/sys/cpu"
 )
 

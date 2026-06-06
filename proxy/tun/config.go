@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/errors"
 )
 
 type InterfaceUpdater struct {

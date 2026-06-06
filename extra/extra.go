@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	xnet "github.com/0x1488/xray-core/common/net"
-	"github.com/0x1488/xray-core/infra/conf"
-	xui "github.com/0x1488/xray-core/main/ui"
+	xnet "github.com/0xCLWN/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/infra/conf"
+	xui "github.com/0xCLWN/xray-core/main/ui"
 )
 
 var (

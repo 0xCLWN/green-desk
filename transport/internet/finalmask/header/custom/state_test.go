@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0x1488/xray-core/transport/internet/finalmask"
+	"github.com/0xCLWN/xray-core/transport/internet/finalmask"
 )
 
 func mustSendRecvUDP(t *testing.T, from net.PacketConn, to net.PacketConn, msg []byte) {

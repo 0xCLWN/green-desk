@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	. "github.com/0x1488/xray-core/app/router"
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/geodata"
-	"github.com/0x1488/xray-core/common/net"
-	"github.com/0x1488/xray-core/common/session"
-	"github.com/0x1488/xray-core/features/dns"
-	"github.com/0x1488/xray-core/features/outbound"
-	routing_session "github.com/0x1488/xray-core/features/routing/session"
-	"github.com/0x1488/xray-core/testing/mocks"
+	. "github.com/0xCLWN/xray-core/app/router"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/geodata"
+	"github.com/0xCLWN/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/common/session"
+	"github.com/0xCLWN/xray-core/features/dns"
+	"github.com/0xCLWN/xray-core/features/outbound"
+	routing_session "github.com/0xCLWN/xray-core/features/routing/session"
+	"github.com/0xCLWN/xray-core/testing/mocks"
 )
 
 type mockOutboundManager struct {

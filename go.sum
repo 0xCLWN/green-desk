@@ -1,5 +1,5 @@
-github.com/0x1488/utls v1.8.2 h1:GPvylzOrFprxKF77IYY4xX9SdV7nrYZ1OTSNisEI/N0=
-github.com/0x1488/utls v1.8.2/go.mod h1:jkSOEkLqn+S/jtpEHPOsVv/4V4EVnelwbMQl4vCWXAM=
+github.com/0xCLWN/utls v1.8.2 h1:nyivEYl0ofrLBnSN5daRR0qYQBEW3sIG83RfBpanQoE=
+github.com/0xCLWN/utls v1.8.2/go.mod h1:jkSOEkLqn+S/jtpEHPOsVv/4V4EVnelwbMQl4vCWXAM=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
 github.com/akavel/rsrc v0.10.2 h1:Zxm8V5eI1hW4gGaYsJQUhxpjkENuG91ki8B4zCrvEsw=

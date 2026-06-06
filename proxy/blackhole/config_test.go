@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/buf"
-	. "github.com/0x1488/xray-core/proxy/blackhole"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/buf"
+	. "github.com/0xCLWN/xray-core/proxy/blackhole"
 )
 
 func TestHTTPResponse(t *testing.T) {

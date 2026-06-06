@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/errors"
 )
 
 // ConfigCreator is a function to create an object by a config.

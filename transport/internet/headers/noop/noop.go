@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/0x1488/xray-core/common"
+	"github.com/0xCLWN/xray-core/common"
 )
 
 type NoOpHeader struct{}

@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"github.com/0x1488/xray-core/proxy/tun"
+	"github.com/0xCLWN/xray-core/proxy/tun"
 	"google.golang.org/protobuf/proto"
 )
 

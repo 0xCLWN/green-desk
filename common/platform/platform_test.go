@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/0x1488/xray-core/common"
-	. "github.com/0x1488/xray-core/common/platform"
+	"github.com/0xCLWN/xray-core/common"
+	. "github.com/0xCLWN/xray-core/common/platform"
 )
 
 func TestNormalizeEnvName(t *testing.T) {

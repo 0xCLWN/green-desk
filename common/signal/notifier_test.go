@@ -3,7 +3,7 @@ package signal_test
 import (
 	"testing"
 
-	. "github.com/0x1488/xray-core/common/signal"
+	. "github.com/0xCLWN/xray-core/common/signal"
 )
 
 func TestNotifierSignal(t *testing.T) {

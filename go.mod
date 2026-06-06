@@ -1,4 +1,4 @@
-module github.com/0x1488/xray-core
+module github.com/0xCLWN/xray-core
 
 go 1.26
 
@@ -88,4 +88,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/refraction-networking/utls => github.com/0x1488/utls v1.8.2
+replace github.com/refraction-networking/utls => github.com/0xCLWN/utls v1.8.2

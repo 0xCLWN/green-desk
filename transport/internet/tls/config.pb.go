@@ -7,7 +7,7 @@
 package tls
 
 import (
-	internet "github.com/0x1488/xray-core/transport/internet"
+	internet "github.com/0xCLWN/xray-core/transport/internet"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

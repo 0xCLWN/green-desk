@@ -3,7 +3,7 @@ package kcp
 import (
 	"encoding/binary"
 
-	"github.com/0x1488/xray-core/common/buf"
+	"github.com/0xCLWN/xray-core/common/buf"
 )
 
 // Command is a KCP command that indicate the purpose of a Segment.

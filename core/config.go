@@ -7,11 +7,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/buf"
-	"github.com/0x1488/xray-core/common/cmdarg"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/main/confloader"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/buf"
+	"github.com/0xCLWN/xray-core/common/cmdarg"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/main/confloader"
 	"google.golang.org/protobuf/proto"
 )
 

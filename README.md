@@ -36,7 +36,7 @@ Paste a `vless://` key and toggle the proxy on/off from a systray icon (macOS, W
 Requires [Go 1.22+](https://go.dev/doc/install).
 
 ```sh
-go run -tags systray github.com/0x1488/xray-core/main@latest -c 'vless://YOUR_KEY'
+go run -tags systray github.com/0xCLWN/xray-core/main@latest -c 'vless://YOUR_KEY'
 ```
 
 ---
@@ -47,7 +47,7 @@ go run -tags systray github.com/0x1488/xray-core/main@latest -c 'vless://YOUR_KE
 
 ```sh
 go build -tags systray \
-  -ldflags '-s -w -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY' \
+  -ldflags '-s -w -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY' \
   -o xray-tray ./main
 ```
 
@@ -62,7 +62,7 @@ sudo dnf install libayatana-appindicator-gtk3-devel  # Fedora
 
 ```sh
 CGO_ENABLED=1 go build -tags systray \
-  -ldflags '-s -w -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY' \
+  -ldflags '-s -w -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY' \
   -o xray-tray ./main
 ```
 
@@ -76,7 +76,7 @@ sudo setcap cap_net_admin+ep ./xray-tray
 
 ```sh
 CGO_ENABLED=0 go build \
-  -ldflags '-s -w -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY' \
+  -ldflags '-s -w -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY' \
   -o xray-tray ./main
 ```
 
@@ -88,7 +88,7 @@ Run natively on a Windows machine with Go installed:
 
 ```sh
 go build -tags systray \
-  -ldflags '-H windowsgui -s -w -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY' \
+  -ldflags '-H windowsgui -s -w -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY' \
   -o xray-tray.exe ./main
 ```
 
@@ -102,11 +102,11 @@ Bake defaults into the binary with `-ldflags '-X flag=value'`.
 
 | Flag                                           | Default  | Description                                          |
 |------------------------------------------------|----------|------------------------------------------------------|
-| `github.com/0x1488/xray-core/extra.Keys`       | —        | `vless://` key baked into the binary                 |
-| `github.com/0x1488/xray-core/extra.Port`       | `10808`  | SOCKS5 listen port                                   |
-| `github.com/0x1488/xray-core/extra.Enabled`    | —        | `true` — start proxy automatically on launch         |
-| `github.com/0x1488/xray-core/extra.SysProxy`   | —        | `true` — also enable system-wide proxy on launch     |
-| `github.com/0x1488/xray-core/extra.OnStartup`  | —        | `true` — register as a login item on launch (macOS)  |
+| `github.com/0xCLWN/xray-core/extra.Keys`       | —        | `vless://` key baked into the binary                 |
+| `github.com/0xCLWN/xray-core/extra.Port`       | `10808`  | SOCKS5 listen port                                   |
+| `github.com/0xCLWN/xray-core/extra.Enabled`    | —        | `true` — start proxy automatically on launch         |
+| `github.com/0xCLWN/xray-core/extra.SysProxy`   | —        | `true` — also enable system-wide proxy on launch     |
+| `github.com/0xCLWN/xray-core/extra.OnStartup`  | —        | `true` — register as a login item on launch (macOS)  |
 
 ---
 
@@ -125,8 +125,8 @@ Pass the key at runtime and skip baking anything in:
 ```sh
 go build -tags systray \
   -ldflags '-s -w
-    -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY
-    -X github.com/0x1488/xray-core/extra.Enabled=true' \
+    -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY
+    -X github.com/0xCLWN/xray-core/extra.Enabled=true' \
   -o xray-tray ./main
 ```
 
@@ -135,9 +135,9 @@ go build -tags systray \
 ```sh
 go build -tags systray \
   -ldflags '-s -w
-    -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY
-    -X github.com/0x1488/xray-core/extra.Enabled=true
-    -X github.com/0x1488/xray-core/extra.SysProxy=true' \
+    -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY
+    -X github.com/0xCLWN/xray-core/extra.Enabled=true
+    -X github.com/0xCLWN/xray-core/extra.SysProxy=true' \
   -o xray-tray ./main
 ```
 
@@ -148,10 +148,10 @@ Add `OnStartup=true` to any of the above. On first launch the binary registers i
 ```sh
 go build -tags systray \
   -ldflags '-s -w
-    -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY
-    -X github.com/0x1488/xray-core/extra.Enabled=true
-    -X github.com/0x1488/xray-core/extra.SysProxy=true
-    -X github.com/0x1488/xray-core/extra.OnStartup=true' \
+    -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY
+    -X github.com/0xCLWN/xray-core/extra.Enabled=true
+    -X github.com/0xCLWN/xray-core/extra.SysProxy=true
+    -X github.com/0xCLWN/xray-core/extra.OnStartup=true' \
   -o xray-tray ./main
 ```
 
@@ -160,8 +160,8 @@ go build -tags systray \
 ```sh
 go build -tags systray \
   -ldflags '-s -w
-    -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY
-    -X github.com/0x1488/xray-core/extra.Port=1080' \
+    -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY
+    -X github.com/0xCLWN/xray-core/extra.Port=1080' \
   -o xray-tray ./main
 ```
 
@@ -169,7 +169,7 @@ go build -tags systray \
 
 ```sh
 CGO_ENABLED=0 go build \
-  -ldflags '-s -w -X github.com/0x1488/xray-core/extra.Keys=vless://YOUR_KEY' \
+  -ldflags '-s -w -X github.com/0xCLWN/xray-core/extra.Keys=vless://YOUR_KEY' \
   -o xray-tray ./main
 
 sudo setcap cap_net_admin+ep ./xray-tray

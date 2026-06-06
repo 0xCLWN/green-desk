@@ -3,7 +3,7 @@ package log // import "github.com/xtls/xray-core/common/log"
 import (
 	"sync"
 
-	"github.com/0x1488/xray-core/common/serial"
+	"github.com/0xCLWN/xray-core/common/serial"
 )
 
 // Message is the interface for all log messages.

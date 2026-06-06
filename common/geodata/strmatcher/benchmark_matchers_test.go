@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/0x1488/xray-core/common"
-	. "github.com/0x1488/xray-core/common/geodata/strmatcher"
+	"github.com/0xCLWN/xray-core/common"
+	. "github.com/0xCLWN/xray-core/common/geodata/strmatcher"
 )
 
 func BenchmarkFullMatcher(b *testing.B) {

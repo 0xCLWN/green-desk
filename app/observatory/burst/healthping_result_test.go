@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0x1488/xray-core/app/observatory/burst"
+	"github.com/0xCLWN/xray-core/app/observatory/burst"
 )
 
 func TestHealthPingResults(t *testing.T) {

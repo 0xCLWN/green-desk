@@ -1,6 +1,6 @@
 package common
 
-import "github.com/0x1488/xray-core/common/errors"
+import "github.com/0xCLWN/xray-core/common/errors"
 
 // Closable is the interface for objects that can release its resources.
 //

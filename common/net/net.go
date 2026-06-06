@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/0x1488/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/errors"
 )
 
 // defines the maximum time an idle TCP session can survive in the tunnel, so

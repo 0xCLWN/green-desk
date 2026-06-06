@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0x1488/xray-core/common"
-	"github.com/0x1488/xray-core/common/dice"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/net"
-	"github.com/0x1488/xray-core/common/net/cnc"
-	"github.com/0x1488/xray-core/common/session"
-	"github.com/0x1488/xray-core/features/dns"
-	"github.com/0x1488/xray-core/features/outbound"
-	"github.com/0x1488/xray-core/transport"
-	"github.com/0x1488/xray-core/transport/internet/stat"
-	"github.com/0x1488/xray-core/transport/pipe"
+	"github.com/0xCLWN/xray-core/common"
+	"github.com/0xCLWN/xray-core/common/dice"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/net"
+	"github.com/0xCLWN/xray-core/common/net/cnc"
+	"github.com/0xCLWN/xray-core/common/session"
+	"github.com/0xCLWN/xray-core/features/dns"
+	"github.com/0xCLWN/xray-core/features/outbound"
+	"github.com/0xCLWN/xray-core/transport"
+	"github.com/0xCLWN/xray-core/transport/internet/stat"
+	"github.com/0xCLWN/xray-core/transport/pipe"
 )
 
 // Dialer is the interface for dialing outbound connections.

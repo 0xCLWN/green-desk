@@ -5,12 +5,12 @@ import (
 
 	"github.com/sagernet/sing-shadowsocks/shadowaead_2022"
 	C "github.com/sagernet/sing/common"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/common/protocol"
-	"github.com/0x1488/xray-core/common/serial"
-	"github.com/0x1488/xray-core/common/task"
-	"github.com/0x1488/xray-core/proxy/shadowsocks"
-	"github.com/0x1488/xray-core/proxy/shadowsocks_2022"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/common/protocol"
+	"github.com/0xCLWN/xray-core/common/serial"
+	"github.com/0xCLWN/xray-core/common/task"
+	"github.com/0xCLWN/xray-core/proxy/shadowsocks"
+	"github.com/0xCLWN/xray-core/proxy/shadowsocks_2022"
 	"google.golang.org/protobuf/proto"
 )
 

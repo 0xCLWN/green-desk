@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/0x1488/xray-core/app/dns"
-	"github.com/0x1488/xray-core/common/geodata"
-	"github.com/0x1488/xray-core/common/net"
-	. "github.com/0x1488/xray-core/infra/conf"
+	"github.com/0xCLWN/xray-core/app/dns"
+	"github.com/0xCLWN/xray-core/common/geodata"
+	"github.com/0xCLWN/xray-core/common/net"
+	. "github.com/0xCLWN/xray-core/infra/conf"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )

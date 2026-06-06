@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0x1488/xray-core/common/dice"
-	"github.com/0x1488/xray-core/common/errors"
-	"github.com/0x1488/xray-core/features/routing"
+	"github.com/0xCLWN/xray-core/common/dice"
+	"github.com/0xCLWN/xray-core/common/errors"
+	"github.com/0xCLWN/xray-core/features/routing"
 )
 
 // HealthPingSettings holds settings for health Checker
