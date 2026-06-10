@@ -8,7 +8,9 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
+import android.provider.Settings
 import android.util.Base64
+import androidx.core.content.FileProvider
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -34,7 +36,7 @@ import java.util.UUID
 
 enum class VpnStatus { DISCONNECTED, CONNECTING, CONNECTED }
 
-data class UpdateInfo(val tag: String, val sizeLabel: String, val url: String)
+data class UpdateInfo(val tag: String, val sizeLabel: String, val url: String, val downloadUrl: String?, val isMajorMinor: Boolean)
 
 object VpnState {
     val status = MutableStateFlow(VpnStatus.DISCONNECTED)
@@ -64,6 +66,13 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _updateInfo = MutableStateFlow<UpdateInfo?>(null)
     val updateInfo: StateFlow<UpdateInfo?> = _updateInfo.asStateFlow()
+
+    private val _bannerDismissed = MutableStateFlow(false)
+    val bannerDismissed: StateFlow<Boolean> = _bannerDismissed.asStateFlow()
+
+    // null = idle, 0..1 = download progress
+    private val _updateProgress = MutableStateFlow<Float?>(null)
+    val updateProgress: StateFlow<Float?> = _updateProgress.asStateFlow()
 
     private val _disguise = MutableStateFlow(prefs.getString(Prefs.DISGUISE, "default") ?: "default")
     val disguise: StateFlow<String> = _disguise.asStateFlow()
@@ -217,13 +226,15 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         val cachedTag = prefs.getString(Prefs.UPDATE_CACHED_TAG, null)
         val cachedUrl = prefs.getString(Prefs.UPDATE_CACHED_URL, null)
         val cachedSize = prefs.getString(Prefs.UPDATE_CACHED_SIZE, null)
+        val cachedDownload = prefs.getString(Prefs.UPDATE_CACHED_DOWNLOAD, null)
 
         val tag: String
         val url: String
         val sizeLabel: String
+        val downloadUrl: String?
 
-        if (now - lastCheck < 24L * 3600 * 1000 && cachedTag != null && cachedUrl != null && cachedSize != null) {
-            tag = cachedTag; url = cachedUrl; sizeLabel = cachedSize
+        if (now - lastCheck < 24L * 3600 * 1000 && cachedTag != null && cachedUrl != null && cachedSize != null && cachedDownload != null) {
+            tag = cachedTag; url = cachedUrl; sizeLabel = cachedSize; downloadUrl = cachedDownload
         } else {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
@@ -238,38 +249,108 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                     val u = obj.getString("html_url")
                     val assets = obj.optJSONArray("assets")
                     var bytes = 0L
+                    var dlUrl: String? = null
                     if (assets != null) {
                         for (i in 0 until assets.length()) {
                             val a = assets.getJSONObject(i)
                             if (a.optString("name").endsWith(".apk", ignoreCase = true)) {
-                                bytes = a.optLong("size", 0L); break
+                                bytes = a.optLong("size", 0L)
+                                dlUrl = a.optString("browser_download_url").takeIf { it.isNotEmpty() }
+                                break
                             }
                         }
                     }
                     val sl = if (bytes > 0) "%.1f MB".format(bytes / (1024.0 * 1024.0)) else ""
-                    Triple(t, u, sl)
+                    Triple(t, u, sl) to dlUrl
                 }.getOrNull()
             } ?: return
-            tag = result.first; url = result.second; sizeLabel = result.third
+            tag = result.first.first; url = result.first.second; sizeLabel = result.first.third; downloadUrl = result.second
             prefs.edit {
                 putLong(Prefs.UPDATE_LAST_CHECK, now)
                 putString(Prefs.UPDATE_CACHED_TAG, tag)
                 putString(Prefs.UPDATE_CACHED_URL, url)
                 putString(Prefs.UPDATE_CACHED_SIZE, sizeLabel)
+                if (downloadUrl != null) putString(Prefs.UPDATE_CACHED_DOWNLOAD, downloadUrl)
+                else remove(Prefs.UPDATE_CACHED_DOWNLOAD)
             }
         }
 
-        val dismissed = prefs.getString(Prefs.UPDATE_DISMISSED_TAG, null)
         val current = BuildConfig.VERSION_NAME
-        if (tag.trimStart('v') != current.trimStart('v') && tag != dismissed) {
-            _updateInfo.value = UpdateInfo(tag = tag, sizeLabel = sizeLabel, url = url)
+        if (normalizeVersion(tag) != normalizeVersion(current)) {
+            _updateInfo.value = UpdateInfo(tag = tag, sizeLabel = sizeLabel, url = url,
+                downloadUrl = downloadUrl, isMajorMinor = isMajorMinorUpdate(current, tag))
+            val dismissed = prefs.getString(Prefs.UPDATE_DISMISSED_TAG, null)
+            if (tag == dismissed) _bannerDismissed.value = true
         }
+    }
+
+    private fun normalizeVersion(v: String): String {
+        val p = v.trimStart('v').split('.').map { it.toIntOrNull() ?: 0 }
+        return "${p.getOrElse(0){0}}.${p.getOrElse(1){0}}.${p.getOrElse(2){0}}"
+    }
+
+    private fun isMajorMinorUpdate(current: String, latest: String): Boolean {
+        fun parts(v: String) = v.trimStart('v').split('.').map { it.toIntOrNull() ?: 0 }
+        val c = parts(current); val l = parts(latest)
+        val cMaj = c.getOrElse(0) { 0 }; val cMin = c.getOrElse(1) { 0 }
+        val lMaj = l.getOrElse(0) { 0 }; val lMin = l.getOrElse(1) { 0 }
+        return lMaj > cMaj || (lMaj == cMaj && lMin > cMin)
     }
 
     fun dismissUpdate() {
         val tag = _updateInfo.value?.tag ?: return
         prefs.edit { putString(Prefs.UPDATE_DISMISSED_TAG, tag) }
-        _updateInfo.value = null
+        _bannerDismissed.value = true
+    }
+
+    fun startUpdate(context: Context) {
+        val info = _updateInfo.value ?: return
+        val dlUrl = info.downloadUrl
+        if (dlUrl == null) {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(info.url))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        }
+        if (!context.packageManager.canRequestPackageInstalls()) {
+            context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        }
+        if (_updateProgress.value != null) return  // already downloading
+        viewModelScope.launch(Dispatchers.IO) {
+            _updateProgress.value = 0f
+            try {
+                val dir = File(context.cacheDir, "updates").also { it.mkdirs() }
+                dir.listFiles()?.forEach { it.delete() }  // clean up any leftover from previous download
+                val file = File(dir, "update.apk")
+                val conn = java.net.URL(dlUrl).openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 60_000
+                conn.connect()
+                val total = conn.contentLengthLong
+                file.outputStream().use { out ->
+                    conn.inputStream.use { inp ->
+                        var downloaded = 0L
+                        val buf = ByteArray(16_384)
+                        var n: Int
+                        while (inp.read(buf).also { n = it } != -1) {
+                            out.write(buf, 0, n)
+                            downloaded += n
+                            if (total > 0) _updateProgress.value = downloaded.toFloat() / total
+                        }
+                    }
+                }
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                context.startActivity(Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (_: Exception) {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(info.url))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } finally {
+                _updateProgress.value = null
+            }
+        }
     }
 
     private fun applyDisguise(context: Context, disguise: String) {

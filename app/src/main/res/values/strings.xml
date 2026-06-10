@@ -78,6 +78,8 @@
     <string name="setting_language">Language</string>
     <string name="setting_app_version">App version</string>
     <string name="app_version">1.0.0</string>
+    <string name="setting_up_to_date">Updates</string>
+    <string name="setting_up_to_date_value">Up to date</string>
 
     <!-- Subscriptions screen -->
     <string name="screen_subscriptions">Subscriptions</string>
@@ -146,6 +148,7 @@
     <!-- Update banner -->
     <string name="update_available">Update available</string>
     <string name="update_view">View</string>
+    <string name="update_install">Install</string>
 
     <!-- Toast messages -->
     <string name="toast_disconnect_to_go_back">Disconnect to go back</string>

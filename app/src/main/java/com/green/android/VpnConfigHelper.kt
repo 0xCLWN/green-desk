@@ -14,11 +14,12 @@ object Prefs {
     const val GEO_GEOIP_URL  = "geo_geoip_url"
     const val GEO_GEOSITE_URL = "geo_geosite_url"
     const val DISGUISE           = "disguise"
-    const val UPDATE_LAST_CHECK    = "update_last_check"
-    const val UPDATE_DISMISSED_TAG = "update_dismissed_tag"
-    const val UPDATE_CACHED_TAG    = "update_cached_tag"
-    const val UPDATE_CACHED_URL    = "update_cached_url"
-    const val UPDATE_CACHED_SIZE   = "update_cached_size"
+    const val UPDATE_LAST_CHECK        = "update_last_check"
+    const val UPDATE_DISMISSED_TAG     = "update_dismissed_tag"
+    const val UPDATE_CACHED_TAG        = "update_cached_tag"
+    const val UPDATE_CACHED_URL        = "update_cached_url"
+    const val UPDATE_CACHED_SIZE       = "update_cached_size"
+    const val UPDATE_CACHED_DOWNLOAD   = "update_cached_download"
 }
 
 private val countryCodeRegex = Regex("_([a-zA-Z]{2})$")

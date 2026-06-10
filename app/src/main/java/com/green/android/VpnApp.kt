@@ -4,11 +4,11 @@ import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -59,12 +59,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
@@ -178,6 +178,8 @@ fun VpnApp(viewModel: VpnViewModel) {
     val geo by viewModel.geo.collectAsState()
     val subscriptions by viewModel.subscriptions.collectAsState()
     val updateInfo by viewModel.updateInfo.collectAsState()
+    val bannerDismissed by viewModel.bannerDismissed.collectAsState()
+    val updateProgress by viewModel.updateProgress.collectAsState()
 
     var screen by remember { mutableStateOf<NavScreen>(NavScreen.Home) }
     var showAppPicker by remember { mutableStateOf(false) }
@@ -256,6 +258,8 @@ fun VpnApp(viewModel: VpnViewModel) {
             allowedApps = allowedApps,
             geoUpdating = geo.updating,
             updateInfo = updateInfo,
+            bannerDismissed = bannerDismissed,
+            updateProgress = updateProgress,
             status = status,
             onSelect = { viewModel.select(it) },
             onConnect = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); viewModel.connect(context, permissionLauncher) },
@@ -264,6 +268,7 @@ fun VpnApp(viewModel: VpnViewModel) {
             onOpenImport = { if (status == VpnStatus.DISCONNECTED) screen = NavScreen.Import },
             onManageSplit = { showAppPicker = true },
             onSkipGeo = { viewModel.skipGeoUpdate() },
+            onStartUpdate = { viewModel.startUpdate(context) },
             onDismissUpdate = { viewModel.dismissUpdate() },
         )
 
@@ -321,6 +326,9 @@ fun VpnApp(viewModel: VpnViewModel) {
                     allowedApps = allowedApps,
                     geoEnabled = geo.enabled,
                     subscriptionCount = subscriptions.size,
+                    updateInfo = updateInfo,
+                    updateProgress = updateProgress,
+                    onStartUpdate = { viewModel.startUpdate(context) },
                     onSplit = { showAppPicker = true },
                     onImport = { screen = NavScreen.Import },
                     onGeoSettings = { screen = NavScreen.GeoSettings },
@@ -382,6 +390,8 @@ fun HomeContent(
     allowedApps: Set<String>,
     geoUpdating: Boolean,
     updateInfo: UpdateInfo?,
+    bannerDismissed: Boolean,
+    updateProgress: Float?,
     status: VpnStatus,
     onSelect: (Config) -> Unit,
     onConnect: () -> Unit,
@@ -390,6 +400,7 @@ fun HomeContent(
     onOpenImport: () -> Unit,
     onManageSplit: () -> Unit,
     onSkipGeo: () -> Unit,
+    onStartUpdate: () -> Unit,
     onDismissUpdate: () -> Unit,
 ) {
     Column(
@@ -422,9 +433,14 @@ fun HomeContent(
             }
         }
 
-        if (updateInfo != null) {
+        if (updateInfo != null && updateInfo.isMajorMinor && !bannerDismissed) {
             Spacer(Modifier.height(10.dp))
-            UpdateBanner(info = updateInfo, onDismiss = onDismissUpdate)
+            UpdateBanner(
+                info = updateInfo,
+                progress = updateProgress,
+                onInstall = onStartUpdate,
+                onDismiss = onDismissUpdate
+            )
         }
 
         // Status block
@@ -899,6 +915,9 @@ fun SettingsScreen(
     allowedApps: Set<String>,
     geoEnabled: Boolean,
     subscriptionCount: Int,
+    updateInfo: UpdateInfo?,
+    updateProgress: Float?,
+    onStartUpdate: () -> Unit,
     onSplit: () -> Unit,
     onImport: () -> Unit,
     onGeoSettings: () -> Unit,
@@ -992,7 +1011,56 @@ fun SettingsScreen(
                 }
                 HorizontalDivider(color = Border)
                 SettingRow(stringResource(R.string.setting_app_version)) {
-                    Text(stringResource(R.string.app_version), fontSize = 13.sp, color = Dim, fontFamily = FontFamily.Monospace)
+                    Text(
+                        BuildConfig.VERSION_NAME,
+                        fontSize = 13.sp,
+                        color = Dim,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+                HorizontalDivider(color = Border)
+                if (updateInfo != null) {
+                    SettingRow(
+                        stringResource(R.string.update_available),
+                        onClick = onStartUpdate.takeIf { updateProgress == null },
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (updateProgress != null) {
+                                Text(
+                                    "${(updateProgress * 100).toInt()}%",
+                                    fontSize = 13.sp,
+                                    color = Dim,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            } else {
+                                Text(
+                                    updateInfo.tag,
+                                    fontSize = 13.sp,
+                                    color = Accent,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Icon(
+                                    Icons.Default.Download,
+                                    null,
+                                    tint = Accent,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    SettingRow(stringResource(R.string.setting_up_to_date)) {
+                        Text(
+                            stringResource(R.string.setting_up_to_date_value),
+                            fontSize = 13.sp,
+                            color = Dim,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
                 }
             }
         }
@@ -1021,7 +1089,10 @@ fun SubscriptionsScreen(
             }
         }
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
             AnimatedVisibility(visible = showAdd) {
@@ -1060,7 +1131,9 @@ fun SubscriptionsScreen(
             }
 
             if (subscriptions.isEmpty() && !showAdd) {
-                Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
                     Text(stringResource(R.string.subscriptions_empty), color = Dim, fontSize = 14.sp, textAlign = TextAlign.Center, lineHeight = 22.sp)
                 }
             } else if (subscriptions.isNotEmpty()) {
@@ -1068,7 +1141,10 @@ fun SubscriptionsScreen(
                     subscriptions.forEachIndexed { i, sub ->
                         if (i > 0) HorizontalDivider(color = Border)
                         Row(
-                            Modifier.fillMaxWidth().background(Surface).padding(14.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .background(Surface)
+                                .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
@@ -1077,7 +1153,10 @@ fun SubscriptionsScreen(
                                 Text(sub.url, fontSize = 11.sp, color = Dim, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
                             }
                             Box(
-                                Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).clickable { onDelete(sub) },
+                                Modifier
+                                    .size(30.dp)
+                                    .clip(RoundedCornerShape(9.dp))
+                                    .clickable { onDelete(sub) },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(Icons.Default.Delete, stringResource(R.string.cd_delete), tint = Danger.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
@@ -1319,7 +1398,9 @@ fun DisguiseSettingsScreen(
                 Icon(
                     Icons.Filled.Info, null,
                     tint = Warn,
-                    modifier = Modifier.size(16.dp).padding(top = 1.dp),
+                    modifier = Modifier
+                        .size(16.dp)
+                        .padding(top = 1.dp),
                 )
                 Text(
                     stringResource(R.string.disguise_restart_warning),
@@ -1756,8 +1837,7 @@ fun AppPickerDialog(allowedApps: Set<String>, onDismiss: () -> Unit, onConfirm: 
 // ── Update banner ─────────────────────────────────────────────────────────────
 
 @Composable
-fun UpdateBanner(info: UpdateInfo, onDismiss: () -> Unit) {
-    val context = LocalContext.current
+fun UpdateBanner(info: UpdateInfo, progress: Float?, onInstall: () -> Unit, onDismiss: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -1778,16 +1858,32 @@ fun UpdateBanner(info: UpdateInfo, onDismiss: () -> Unit) {
             Text(sub, fontSize = 11.5.sp, color = Dim, fontFamily = FontFamily.Monospace)
         }
         TextButton(
-            onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(info.url))) },
+            onClick = onInstall,
+            enabled = progress == null,
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
         ) {
-            Text(stringResource(R.string.update_view), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Accent)
+            if (progress != null) {
+                Text(
+                    "${(progress * 100).toInt()}%",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Dim,
+                    fontFamily = FontFamily.Monospace
+                )
+            } else {
+                Text(
+                    stringResource(R.string.update_install),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Accent
+                )
+            }
         }
         Box(
             Modifier
                 .size(32.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .clickable(onClick = onDismiss),
+                .clickable(enabled = progress == null, onClick = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Default.Close, null, tint = Dim, modifier = Modifier.size(15.dp))
