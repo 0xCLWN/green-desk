@@ -72,6 +72,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -224,6 +225,10 @@ fun VpnApp(viewModel: VpnViewModel) {
 
     fun showToast(msg: String, warn: Boolean = false) { toast = ToastData(msg, warn) }
 
+    LaunchedEffect(Unit) {
+        viewModel.noUpdateSignal.collect { showToast(context.getString(R.string.toast_up_to_date)) }
+    }
+
     val layerVisible = status == VpnStatus.CONNECTED || status == VpnStatus.CONNECTING
 
     // Intercept back when pushed screen is open
@@ -329,6 +334,7 @@ fun VpnApp(viewModel: VpnViewModel) {
                     updateInfo = updateInfo,
                     updateProgress = updateProgress,
                     onStartUpdate = { viewModel.startUpdate(context) },
+                    onRecheckUpdates = { viewModel.recheckUpdates() },
                     onSplit = { showAppPicker = true },
                     onImport = { screen = NavScreen.Import },
                     onGeoSettings = { screen = NavScreen.GeoSettings },
@@ -426,7 +432,13 @@ fun HomeContent(
                 ) {
                     Icon(Icons.Default.Security, null, tint = Accent, modifier = Modifier.size(15.dp))
                 }
-                Text(stringResource(R.string.app_title), fontWeight = FontWeight.Bold, fontSize = 19.sp, letterSpacing = (-0.3).sp, color = TextPrimary)
+                Text(
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(color = TextPrimary)) { append("smol green ") }
+                        withStyle(SpanStyle(color = Dim)) { append("vpn") }
+                    },
+                    fontWeight = FontWeight.Bold, fontSize = 19.sp, letterSpacing = (-0.3).sp,
+                )
             }
             SmolIconBtn(onClick = onOpenSettings) {
                 Icon(Icons.Default.Settings, stringResource(R.string.cd_settings), tint = TextPrimary, modifier = Modifier.size(20.dp))
@@ -918,6 +930,7 @@ fun SettingsScreen(
     updateInfo: UpdateInfo?,
     updateProgress: Float?,
     onStartUpdate: () -> Unit,
+    onRecheckUpdates: () -> Unit,
     onSplit: () -> Unit,
     onImport: () -> Unit,
     onGeoSettings: () -> Unit,
@@ -1054,12 +1067,12 @@ fun SettingsScreen(
                     }
                 } else {
                     SettingRow(stringResource(R.string.setting_up_to_date)) {
-                        Text(
-                            stringResource(R.string.setting_up_to_date_value),
-                            fontSize = 13.sp,
-                            color = Dim,
-                            fontFamily = FontFamily.Monospace
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(stringResource(R.string.setting_up_to_date_value), fontSize = 13.sp, color = Dim, fontFamily = FontFamily.Monospace)
+                            SmolIconBtn(onClick = onRecheckUpdates) {
+                                Icon(Icons.Default.Refresh, null, tint = Dim, modifier = Modifier.size(15.dp))
+                            }
+                        }
                     }
                 }
             }

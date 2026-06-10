@@ -80,6 +80,7 @@
     <string name="app_version">1.0.0</string>
     <string name="setting_up_to_date">Updates</string>
     <string name="setting_up_to_date_value">Up to date</string>
+    <string name="toast_up_to_date">Up to date</string>
 
     <!-- Subscriptions screen -->
     <string name="screen_subscriptions">Subscriptions</string>

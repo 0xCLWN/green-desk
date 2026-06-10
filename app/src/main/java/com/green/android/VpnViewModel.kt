@@ -8,22 +8,25 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
+import android.os.Build
 import android.provider.Settings
 import android.util.Base64
-import androidx.core.content.FileProvider
 import androidx.activity.result.ActivityResultLauncher
+import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.green.android.BuildConfig
 import com.green.android.data.AppDatabase
 import com.green.android.data.Config
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -70,6 +73,9 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
     private val _bannerDismissed = MutableStateFlow(false)
     val bannerDismissed: StateFlow<Boolean> = _bannerDismissed.asStateFlow()
 
+    private val _noUpdateSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val noUpdateSignal: SharedFlow<Unit> = _noUpdateSignal
+
     // null = idle, 0..1 = download progress
     private val _updateProgress = MutableStateFlow<Float?>(null)
     val updateProgress: StateFlow<Float?> = _updateProgress.asStateFlow()
@@ -85,14 +91,19 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
     val subscriptions: StateFlow<List<com.green.android.data.Subscription>> = subDao.getAllFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val configs: StateFlow<List<Config>> = dao.getAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         viewModelScope.launch { seedDefaultConfigs() }
         viewModelScope.launch(Dispatchers.IO) { runCatching { refreshAllSubscriptions() } }
         viewModelScope.launch { runCatching { checkForUpdates() } }
+        viewModelScope.launch {
+            configs.first { it.isNotEmpty() }.let { list ->
+                if (_selectedId.value == null) select(list.first())
+            }
+        }
     }
-
-    val configs: StateFlow<List<Config>> = dao.getAll()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _selectedId = MutableStateFlow<Int?>(
         prefs.getInt(Prefs.LAST_SELECTED, -1).takeIf { it != -1 }
@@ -276,7 +287,7 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         val current = BuildConfig.VERSION_NAME
-        if (normalizeVersion(tag) != normalizeVersion(current)) {
+        if (isNewerVersion(current, tag)) {
             _updateInfo.value = UpdateInfo(tag = tag, sizeLabel = sizeLabel, url = url,
                 downloadUrl = downloadUrl, isMajorMinor = isMajorMinorUpdate(current, tag))
             val dismissed = prefs.getString(Prefs.UPDATE_DISMISSED_TAG, null)
@@ -284,17 +295,32 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun normalizeVersion(v: String): String {
-        val p = v.trimStart('v').split('.').map { it.toIntOrNull() ?: 0 }
-        return "${p.getOrElse(0){0}}.${p.getOrElse(1){0}}.${p.getOrElse(2){0}}"
+    private fun versionParts(v: String) = v.trimStart('v').split('.').map { it.toIntOrNull() ?: 0 }
+
+    private fun isNewerVersion(current: String, latest: String): Boolean {
+        val c = versionParts(current);
+        val l = versionParts(latest)
+        for (i in 0 until maxOf(c.size, l.size)) {
+            val diff = (l.getOrElse(i) { 0 }) - (c.getOrElse(i) { 0 })
+            if (diff != 0) return diff > 0
+        }
+        return false
     }
 
     private fun isMajorMinorUpdate(current: String, latest: String): Boolean {
-        fun parts(v: String) = v.trimStart('v').split('.').map { it.toIntOrNull() ?: 0 }
-        val c = parts(current); val l = parts(latest)
+        val c = versionParts(current);
+        val l = versionParts(latest)
         val cMaj = c.getOrElse(0) { 0 }; val cMin = c.getOrElse(1) { 0 }
         val lMaj = l.getOrElse(0) { 0 }; val lMin = l.getOrElse(1) { 0 }
         return lMaj > cMaj || (lMaj == cMaj && lMin > cMin)
+    }
+
+    fun recheckUpdates() {
+        prefs.edit { putLong(Prefs.UPDATE_LAST_CHECK, 0L) }
+        viewModelScope.launch {
+            runCatching { checkForUpdates() }
+            if (_updateInfo.value == null) _noUpdateSignal.tryEmit(Unit)
+        }
     }
 
     fun dismissUpdate() {
@@ -358,7 +384,12 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         val pkg = context.packageName
         // Class names are rooted in the namespace (com.green.android), not the applicationId,
         // so the two diverge in debug builds that add an applicationIdSuffix.
-        val ns = MainActivity::class.java.packageName
+        val ns = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MainActivity::class.java.packageName
+        } else {
+            MainActivity::class.java.`package`?.name ?: "green"
+        }
+
         val aliases = mapOf(
             "default"    to ComponentName(pkg, "$ns.MainActivityDefault"),
             "alfa_bank"  to ComponentName(pkg, "$ns.MainActivityAlfaBank"),
