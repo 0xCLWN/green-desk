@@ -26,17 +26,18 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease
 
-      - name: Sign APK
+      - name: Zipalign and sign APK
         run: |
-          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -name apksigner | sort -V | tail -1)
+          TOOLS=$(find "$ANDROID_SDK_ROOT/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
           UNSIGNED=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
-          "$APKSIGNER" sign \
+          "$TOOLS/zipalign" -v 4 "$UNSIGNED" aligned.apk
+          "$TOOLS/apksigner" sign \
             --ks green-release.jks \
             --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
             --ks-pass "pass:${{ secrets.STORE_PASSWORD }}" \
             --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
             --out "green-${{ github.ref_name }}.apk" \
-            "$UNSIGNED"
+            aligned.apk
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
