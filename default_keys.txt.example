@@ -1,0 +1,5 @@
+# Default VLESS keys baked into the APK at build time.
+# Copy this file to default_keys.txt and add real links (one per line).
+# Lines starting with # are ignored.
+
+# vless://UUID@host:port?type=tcp&security=reality&pbk=PUBLIC_KEY&sid=SHORT_ID&fp=chrome&sni=SNI#server-name

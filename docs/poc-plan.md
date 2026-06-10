@@ -53,7 +53,7 @@ Permissions and service declaration needed:
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
 <service
-    android:name=".SwissVpnService"
+    android:name=".GreenVpnService"
     android:permission="android.permission.BIND_VPN_SERVICE"
     android:foregroundServiceType="specialUse">
     <intent-filter>
@@ -85,7 +85,7 @@ The config must have a SOCKS5 inbound so tun2socks has somewhere to connect:
 }
 ```
 
-### 5. Implement SwissVpnService
+### 5. Implement GreenVpnService
 
 `VpnService` subclass — the core of the app.
 
@@ -98,7 +98,7 @@ Responsibilities:
 - On stop: tear everything down in reverse order
 
 ```kotlin
-class SwissVpnService : VpnService() {
+class GreenVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // 1. start xray

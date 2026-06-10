@@ -17,12 +17,12 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
-            android:theme="@style/Theme.Swiss">
+            android:theme="@style/Theme.Green">
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
                 android:label="@string/app_name"
-                android:theme="@style/Theme.Swiss"/>
+                android:theme="@style/Theme.Green"/>
 
         <activity-alias
                 android:name=".MainActivityDefault"
@@ -75,7 +75,7 @@
         </receiver>
 
         <service
-                android:name=".SwissVpnService"
+                android:name=".GreenVpnService"
                 android:exported="false"
                 android:permission="android.permission.BIND_VPN_SERVICE"
                 android:foregroundServiceType="specialUse">

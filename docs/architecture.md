@@ -1,4 +1,4 @@
-# Swiss VPN — Architecture
+# Green VPN — Architecture
 
 ## Packet flow (Chrome → internet)
 

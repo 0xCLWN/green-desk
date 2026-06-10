@@ -65,7 +65,7 @@ target_compile_definitions(hev-socks5-tunnel PRIVATE
     SOCKLEN_T_DEFINED
     ENABLE_LIBRARY
     "COMMIT_ID=\"local\""
-    PKGNAME=com/swiss/android
+    PKGNAME=com/green/android
     CLSNAME=TProxyService
 )
 target_link_libraries(hev-socks5-tunnel PRIVATE

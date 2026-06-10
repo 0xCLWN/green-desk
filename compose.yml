@@ -13,9 +13,9 @@ services:
     environment:
       # Provide your own keystore, or a temporary one is generated automatically.
       KEYSTORE_FILE: ${KEYSTORE_FILE:-}
-      KEY_ALIAS: ${KEY_ALIAS:-swiss}
-      KEY_PASSWORD: ${KEY_PASSWORD:-swiss123456}
-      STORE_PASSWORD: ${STORE_PASSWORD:-swiss123456}
+      KEY_ALIAS: ${KEY_ALIAS:-green}
+      KEY_PASSWORD: ${KEY_PASSWORD:-green123456}
+      STORE_PASSWORD: ${STORE_PASSWORD:-green123456}
 
 volumes:
   gradle-cache:

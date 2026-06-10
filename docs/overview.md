@@ -1,4 +1,4 @@
-# Swiss VPN — Project Overview
+# Green VPN — Project Overview
 
 ## What this is
 
@@ -13,27 +13,27 @@ xray-core speaks (VMess, Trojan, Shadowsocks, etc.) by changing the config.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Android app  (com.swiss.android)                │
+│  Android app  (com.green.android)                │
 │                                                     │
 │  MainActivity                                       │
 │    └── VpnScreen (Compose)                          │
 │          └── VpnViewModel                           │
 │                ├── VpnService.prepare()  ← system   │
-│                └── SwissVpnService  ────────────┐   │
+│                └── GreenVpnService  ────────────┐   │
 │                                                 │   │
 │         ┌───────────────────────────────────────┘   │
 │         │                                           │
 │         ▼                                           │
-│  SwissVpnService  (VpnService subclass)             │
+│  GreenVpnService  (VpnService subclass)             │
 │    ├── VpnService.Builder  → tun0  (kernel)         │
-│    ├── Libswiss.setProtector()  → socket protection │
-│    ├── Libswiss.start(config)   → xray-core         │
+│    ├── Libgreen.setProtector()  → socket protection │
+│    ├── Libgreen.start(config)   → xray-core         │
 │    └── TProxyService.TProxyStartService(yaml, fd)   │
 │                                                     │
 └────────────────┬────────────────┬───────────────────┘
                  │                │
     ┌────────────▼───┐   ┌────────▼──────────┐
-    │  libswiss.aar  │   │ libhev-socks5-    │
+    │  libgreen.aar  │   │ libhev-socks5-    │
     │  (our Go code) │   │ tunnel.so         │
     │                │   │                   │
     │  xray-core     │   │  tun2socks        │
@@ -56,15 +56,15 @@ xray-core speaks (VMess, Trojan, Shadowsocks, etc.) by changing the config.
 
 ### `go/` — xray-core Go wrapper
 
-**Files:** `libswiss.go`, `imports.go`, `go.mod`
+**Files:** `libgreen.go`, `imports.go`, `go.mod`
 
 We own this code. It wraps xray-core via gomobile and exposes three things to Kotlin:
 
-- `Libswiss.setProtector(Protector)` — registers a socket protection callback
-- `Libswiss.start(configJSON)` — starts xray-core with a JSON config
-- `Libswiss.stop()` — stops xray-core
+- `Libgreen.setProtector(Protector)` — registers a socket protection callback
+- `Libgreen.start(configJSON)` — starts xray-core with a JSON config
+- `Libgreen.stop()` — stops xray-core
 
-The `Protector` interface lets `SwissVpnService` call Android's `VpnService.protect(fd)`
+The `Protector` interface lets `GreenVpnService` call Android's `VpnService.protect(fd)`
 on every socket xray opens. Without this, xray's outbound traffic would re-enter tun0
 and loop infinitely.
 
@@ -81,12 +81,12 @@ recent versions, which meant no socket protection and a split-route workaround. 
 the Go code gives us control over the API, dependency versions, and the ability to add
 socket protection properly.
 
-**Build:** `./gradlew buildGoLib` — Gradle runs `gomobile bind` and outputs `libswiss.aar`
+**Build:** `./gradlew buildGoLib` — Gradle runs `gomobile bind` and outputs `libgreen.aar`
 into `app/libs/`. The task is input-tracked: it only reruns when Go sources change.
 
 ---
 
-### `app/libs/libswiss.aar` — generated artifact
+### `app/libs/libgreen.aar` — generated artifact
 
 Output of `gomobile bind`. Contains:
 
@@ -118,16 +118,16 @@ exact package for the JNI binding to succeed.
 
 ---
 
-### `SwissVpnService` — the glue
+### `GreenVpnService` — the glue
 
 Subclasses Android's `VpnService`. Owns the lifecycle of all three native components.
 
 Startup sequence:
 
 1. Post foreground notification (Android requires this for VPN services)
-2. Register socket protector with xray via `Libswiss.setProtector()`
+2. Register socket protector with xray via `Libgreen.setProtector()`
 3. Build the TUN interface — `VpnService.Builder` → `tun0`
-4. Start xray: `Libswiss.start(config)` — listens on `127.0.0.1:10808` SOCKS5
+4. Start xray: `Libgreen.start(config)` — listens on `127.0.0.1:10808` SOCKS5
 5. Write hev YAML config to `filesDir/tun.yaml`
 6. Start hev: `TProxyService.TProxyStartService(yamlPath, tun0Fd)`
 

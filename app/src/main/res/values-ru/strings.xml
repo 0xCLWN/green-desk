@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">swiss</string>
+    <string name="app_name">green</string>
 
     <!-- App bar -->
-    <string name="app_title">smol vpn</string>
+    <string name="app_title">smol green vpn</string>
 
     <!-- Home screen -->
     <string name="status_not_connected">Нет подключения</string>

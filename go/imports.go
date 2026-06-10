@@ -1,4 +1,4 @@
-package libswiss
+package libgreen
 
 // Blank imports register xray-core's protocol and transport handlers via init().
 // Without these, the JSON config loader won't know about the protocols.

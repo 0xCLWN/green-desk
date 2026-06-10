@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "swiss"
+rootProject.name = "green"
 include(":app")
  
