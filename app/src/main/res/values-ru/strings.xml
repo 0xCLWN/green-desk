@@ -122,6 +122,7 @@
     <string name="dialog_split_title">Раздельный туннель</string>
     <string name="dialog_split_desc">Отмеченные приложения идут через VPN. По умолчанию — все.</string>
     <string name="search_hint">Поиск</string>
+    <string name="btn_tunnel_suggested">Рекомендуемые</string>
     <string name="btn_clear">Очистить</string>
     <string name="btn_cancel">Отмена</string>
     <string name="btn_save">Сохранить</string>

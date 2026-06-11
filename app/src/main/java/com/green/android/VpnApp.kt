@@ -171,6 +171,7 @@ fun VpnApp(viewModel: VpnViewModel) {
     val configs by viewModel.configs.collectAsState()
     val selectedId by viewModel.selectedId.collectAsState()
     val allowedApps by viewModel.allowedApps.collectAsState()
+    val suggestedApps by viewModel.suggestedApps.collectAsState()
     val addError by viewModel.addError.collectAsState()
     val subscriptionImporting by viewModel.subscriptionImporting.collectAsState()
     val autoConnect by viewModel.autoConnect.collectAsState()
@@ -360,6 +361,7 @@ fun VpnApp(viewModel: VpnViewModel) {
         if (showAppPicker) {
             AppPickerDialog(
                 allowedApps = allowedApps,
+                suggestedApps = suggestedApps,
                 onDismiss = { showAppPicker = false },
                 onConfirm = { viewModel.setAllowedApps(it); showAppPicker = false },
             )
@@ -1722,7 +1724,12 @@ fun ImportOption(icon: @Composable () -> Unit, title: String, sub: String, onCli
 // ── App picker dialog ─────────────────────────────────────────────────────────
 
 @Composable
-fun AppPickerDialog(allowedApps: Set<String>, onDismiss: () -> Unit, onConfirm: (Set<String>) -> Unit) {
+fun AppPickerDialog(
+    allowedApps: Set<String>,
+    suggestedApps: List<String>,
+    onDismiss: () -> Unit,
+    onConfirm: (Set<String>) -> Unit,
+) {
     val context = LocalContext.current
     val pm = context.packageManager
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
@@ -1736,10 +1743,14 @@ fun AppPickerDialog(allowedApps: Set<String>, onDismiss: () -> Unit, onConfirm: 
 
     LaunchedEffect(Unit) {
         apps = withContext(Dispatchers.IO) {
-            pm.getInstalledApplications(PackageManager.GET_META_DATA)
+            val installed = pm.getInstalledApplications(PackageManager.GET_META_DATA)
                 .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 || it.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0 }
                 .map { AppInfo(it.packageName, pm.getApplicationLabel(it).toString()) }
-                .sortedBy { it.label.lowercase() }
+            val installedPkgs = installed.map { it.packageName }.toSet()
+            val uninstalled = suggestedApps
+                .filter { it !in installedPkgs }
+                .map { AppInfo(it, it) }
+            (installed + uninstalled).sortedBy { it.label.lowercase() }
         }
         loading = false
     }
@@ -1831,6 +1842,11 @@ fun AppPickerDialog(allowedApps: Set<String>, onDismiss: () -> Unit, onConfirm: 
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (suggestedApps.isNotEmpty()) {
+                    TextButton(onClick = { selected = selected + suggestedApps.toSet() }) {
+                        Text(stringResource(R.string.btn_tunnel_suggested), color = Accent)
+                    }
+                }
                 if (selected.isNotEmpty()) {
                     TextButton(onClick = { selected = emptySet() }) { Text(stringResource(R.string.btn_clear), color = Dim) }
                 }

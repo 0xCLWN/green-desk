@@ -53,6 +53,37 @@ data class GeoState(
     val filesVersion: Int = 0,
 )
 
+private val DEFAULT_SUGGESTED_APPS = setOf(
+    "org.telegram.messenger",
+    "org.telegram.messenger.web",
+    "org.thunderdog.challegram",
+    "org.thoughtcrime.securesms",
+    "com.instagram.android",
+    "com.facebook.katana",
+    "com.facebook.orca",
+    "com.twitter.android",
+    "com.snapchat.android",
+    "com.pinterest",
+    "com.linkedin.android",
+    "com.reddit.frontpage",
+    "com.tumblr",
+    "com.discord",
+    "com.whatsapp",
+    "com.whatsapp.w4b",
+    "com.zhiliaoapp.musically",
+    "com.google.android.youtube",
+    "com.google.android.apps.youtube.music",
+    "com.netflix.mediaclient",
+    "tv.twitch.android.app",
+    "com.spotify.music",
+    "com.openai.chatgpt",
+    "com.anthropic.claude",
+    "com.google.android.apps.bard",
+    "ai.perplexity.app.android",
+    "com.microsoft.bing",
+    "com.microsoft.copilot",
+)
+
 class VpnViewModel(app: Application) : AndroidViewModel(app) {
     private val dao = AppDatabase.get(app).configDao()
     private val subDao = AppDatabase.get(app).subscriptionDao()
@@ -127,6 +158,11 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         _allowedApps.value = apps
         prefs.edit { putStringSet(Prefs.ALLOWED_APPS, apps) }
     }
+
+    private val _suggestedApps = MutableStateFlow<List<String>>(
+        (prefs.getStringSet(Prefs.SUGGESTED_APPS, null) ?: DEFAULT_SUGGESTED_APPS).toList()
+    )
+    val suggestedApps: StateFlow<List<String>> = _suggestedApps.asStateFlow()
 
     private val _geo = MutableStateFlow(
         GeoState(
@@ -223,6 +259,24 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                     _disguise.value = disguise
                     applyDisguise(getApplication(), disguise)
                 }
+
+                obj.optJSONArray("apps_proxied_by_default")?.let { arr ->
+                    val pkgs = (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    if (pkgs.isNotEmpty()) {
+                        prefs.edit { putStringSet(Prefs.ALLOWED_APPS, pkgs) }
+                        _allowedApps.value = pkgs
+                    }
+                }
+
+                val suggestedPkgs = if (obj.has("suggested_apps")) {
+                    val arr = obj.optJSONArray("suggested_apps")
+                    if (arr != null) (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    else emptySet()
+                } else {
+                    DEFAULT_SUGGESTED_APPS
+                }
+                prefs.edit { putStringSet(Prefs.SUGGESTED_APPS, suggestedPkgs) }
+                _suggestedApps.value = suggestedPkgs.toList()
             }
         }
 

@@ -133,6 +133,7 @@
     <string name="dialog_split_desc">Checked apps are routed through the VPN. By default all apps use VPN.</string>
     <string name="search_hint">Search</string>
     <string name="btn_clear">Clear</string>
+    <string name="btn_tunnel_suggested">Suggested</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_save">Save</string>
 

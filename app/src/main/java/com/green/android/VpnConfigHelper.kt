@@ -20,6 +20,7 @@ object Prefs {
     const val UPDATE_CACHED_URL        = "update_cached_url"
     const val UPDATE_CACHED_SIZE       = "update_cached_size"
     const val UPDATE_CACHED_DOWNLOAD   = "update_cached_download"
+    const val SUGGESTED_APPS           = "suggested_apps"
 }
 
 private val countryCodeRegex = Regex("_([a-zA-Z]{2})$")
