@@ -82,6 +82,9 @@ private val DEFAULT_SUGGESTED_APPS = setOf(
     "ai.perplexity.app.android",
     "com.microsoft.bing",
     "com.microsoft.copilot",
+    // Browsers
+    "com.android.chrome",
+    "com.brave.browser",
 )
 
 class VpnViewModel(app: Application) : AndroidViewModel(app) {
@@ -260,14 +263,6 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                     applyDisguise(getApplication(), disguise)
                 }
 
-                obj.optJSONArray("apps_proxied_by_default")?.let { arr ->
-                    val pkgs = (0 until arr.length()).map { arr.getString(it) }.toSet()
-                    if (pkgs.isNotEmpty()) {
-                        prefs.edit { putStringSet(Prefs.ALLOWED_APPS, pkgs) }
-                        _allowedApps.value = pkgs
-                    }
-                }
-
                 val suggestedPkgs = if (obj.has("suggested_apps")) {
                     val arr = obj.optJSONArray("suggested_apps")
                     if (arr != null) (0 until arr.length()).map { arr.getString(it) }.toSet()
@@ -277,6 +272,11 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 prefs.edit { putStringSet(Prefs.SUGGESTED_APPS, suggestedPkgs) }
                 _suggestedApps.value = suggestedPkgs.toList()
+
+                if (obj.optBoolean("suggested_proxied_by_default", false) && suggestedPkgs.isNotEmpty()) {
+                    prefs.edit { putStringSet(Prefs.ALLOWED_APPS, suggestedPkgs) }
+                    _allowedApps.value = suggestedPkgs
+                }
             }
         }
 

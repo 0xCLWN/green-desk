@@ -167,6 +167,12 @@ data class AppInfo(val packageName: String, val label: String)
 fun VpnApp(viewModel: VpnViewModel) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val strUpToDate = stringResource(R.string.toast_up_to_date)
+    val strDisconnectBack = stringResource(R.string.toast_disconnect_to_go_back)
+    val strDisconnectSettings = stringResource(R.string.toast_disconnect_to_change_settings)
+    val strDisconnectSplit = stringResource(R.string.toast_disconnect_to_change_split)
+    val strServerSaved = stringResource(R.string.toast_server_saved)
+    val strServerDeleted = stringResource(R.string.toast_server_deleted)
     val status by viewModel.status.collectAsState()
     val configs by viewModel.configs.collectAsState()
     val selectedId by viewModel.selectedId.collectAsState()
@@ -227,7 +233,7 @@ fun VpnApp(viewModel: VpnViewModel) {
     fun showToast(msg: String, warn: Boolean = false) { toast = ToastData(msg, warn) }
 
     LaunchedEffect(Unit) {
-        viewModel.noUpdateSignal.collect { showToast(context.getString(R.string.toast_up_to_date)) }
+        viewModel.noUpdateSignal.collect { showToast(strUpToDate) }
     }
 
     val layerVisible = status == VpnStatus.CONNECTED || status == VpnStatus.CONNECTING
@@ -243,7 +249,7 @@ fun VpnApp(viewModel: VpnViewModel) {
     // Intercept back when connected layer is up (lower priority — fires only when no pushed screen)
     BackHandler(enabled = layerVisible) {
         shake = true
-        showToast(context.getString(R.string.toast_disconnect_to_go_back), warn = true)
+        showToast(strDisconnectBack, warn = true)
     }
 
     Box(
@@ -285,8 +291,8 @@ fun VpnApp(viewModel: VpnViewModel) {
             status = status,
             shake = shake,
             onDisconnect = { viewModel.disconnect(context) },
-            onLocked = { shake = true; showToast(context.getString(R.string.toast_disconnect_to_change_settings), warn = true) },
-            onSplitTap = { shake = true; showToast(context.getString(R.string.toast_disconnect_to_change_split), warn = true) },
+            onLocked = { shake = true; showToast(strDisconnectSettings, warn = true) },
+            onSplitTap = { shake = true; showToast(strDisconnectSplit, warn = true) },
             onShakeDone = { shake = false },
         )
 
@@ -351,8 +357,8 @@ fun VpnApp(viewModel: VpnViewModel) {
             if (cfg != null) {
                 EditServerScreen(
                     config = cfg,
-                    onSave = { viewModel.updateConfig(it); screen = NavScreen.Home; showToast(context.getString(R.string.toast_server_saved)) },
-                    onDelete = { viewModel.deleteConfig(cfg); screen = NavScreen.Home; showToast(context.getString(R.string.toast_server_deleted)) },
+                    onSave = { viewModel.updateConfig(it); screen = NavScreen.Home; showToast(strServerSaved) },
+                    onDelete = { viewModel.deleteConfig(cfg); screen = NavScreen.Home; showToast(strServerDeleted) },
                     onBack = { screen = NavScreen.Home },
                 )
             }
@@ -1545,6 +1551,8 @@ fun ImportScreen(
     onToast: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val strQrComingSoon = stringResource(R.string.toast_qr_coming_soon)
+    val strClipboardEmpty = stringResource(R.string.toast_clipboard_empty)
     var expanded by remember { mutableStateOf<String?>(null) } // "manual" | "subscription"
     var manualInput by remember { mutableStateOf("") }
     var subscriptionUrl by remember { mutableStateOf("") }
@@ -1577,7 +1585,7 @@ fun ImportScreen(
             ImportOption(
                 icon = { Icon(Icons.Default.QrCode, null, tint = Accent, modifier = Modifier.size(22.dp)) },
                 title = stringResource(R.string.import_scan_qr_title), sub = stringResource(R.string.import_scan_qr_sub),
-                onClick = { onToast(context.getString(R.string.toast_qr_coming_soon)) },
+                onClick = { onToast(strQrComingSoon) },
             )
             Spacer(Modifier.height(11.dp))
             ImportOption(
@@ -1589,7 +1597,7 @@ fun ImportScreen(
                     if (clip.isNotBlank()) {
                         manualInput = clip; expanded = "manual"; onClearError()
                     }
-                    else onToast(context.getString(R.string.toast_clipboard_empty))
+                    else onToast(strClipboardEmpty)
                 },
             )
             Spacer(Modifier.height(11.dp))
