@@ -42,6 +42,10 @@
     <!-- Disconnect -->
     <string name="btn_disconnect">Отключить</string>
 
+    <!-- Notification -->
+    <string name="notif_title">Green VPN</string>
+    <string name="notif_connected">Подключено</string>
+
     <!-- Settings screen -->
     <string name="screen_settings">Настройки</string>
     <string name="section_connection">Подключение</string>

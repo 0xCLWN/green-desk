@@ -3,6 +3,7 @@ package com.green.android
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.HttpURLConnection
 import java.net.URL
 
 // GEO UPDATER — delete this file to remove geo update support.
@@ -28,9 +29,13 @@ object GeoUpdater {
         listOf("geoip.dat" to geoipUrl, "geosite.dat" to geositeUrl).forEach { (name, url) ->
             val tmp = File(filesDir, "$name.tmp")
             try {
-                URL(url).openStream().use { input ->
+                val conn = URL(url).openConnection() as HttpURLConnection
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 60_000
+                conn.inputStream.use { input ->
                     tmp.outputStream().use { output -> input.copyTo(output) }
                 }
+                conn.disconnect()
                 tmp.renameTo(File(filesDir, name))
             } finally {
                 if (tmp.exists()) tmp.delete()

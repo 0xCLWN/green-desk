@@ -10,6 +10,7 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import com.green.android.R
 import go.Seq
 import libgreen.Libgreen
 import java.io.File
@@ -65,7 +66,7 @@ class GreenVpnService : VpnService() {
             stopVpn(); return
         }
 
-        startForeground(NOTIF_ID, buildNotification("Connecting…"))
+        startForeground(NOTIF_ID, buildNotification(getString(R.string.status_connecting)))
         try {
             Seq.setContext(applicationContext)
 
@@ -88,7 +89,7 @@ class GreenVpnService : VpnService() {
 
             TProxyService.TProxyStartService(writeTunConfig(socksPort, socksUser, socksPass), vpnInterface!!.fd)
 
-            startForeground(NOTIF_ID, buildNotification("Connected"))
+            startForeground(NOTIF_ID, buildNotification(getString(R.string.notif_connected)))
             VpnState.status.value = VpnStatus.CONNECTED
         } catch (e: Exception) {
             stopVpn()
@@ -150,10 +151,10 @@ class GreenVpnService : VpnService() {
         )
         return NotificationCompat.Builder(this, channel)
             .setSmallIcon(android.R.drawable.ic_lock_lock)
-            .setContentTitle("Green VPN")
+            .setContentTitle(getString(R.string.notif_title))
             .setContentText(status)
             .setContentIntent(openIntent)
-            .addAction(0, "Disconnect", stopIntent)
+            .addAction(0, getString(R.string.btn_disconnect), stopIntent)
             .setOngoing(true)
             .setPriority(if (showNotify) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_MIN)
             .setSilent(!showNotify)
