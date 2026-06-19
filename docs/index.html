@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green VPN Builder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --green-dim: #238636;
+      --green-bg: #0d2e17;
+      --red: #f85149;
+      --red-bg: #2a0e0a;
+      --yellow: #d29922;
+      --yellow-bg: #2a1e00;
+      --radius: 8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: var(--green-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    label .hint {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    input[type="password"],
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="password"]:focus,
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--green);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .toggle-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-field input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+      cursor: pointer;
+    }
+
+    .toggle-field span {
+      font-size: 13px;
+    }
+
+    .geo-fields {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .geo-fields.visible { display: block; }
+
+    .token-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .token-row input {
+      flex: 1;
+    }
+
+    .token-link {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .token-link:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+
+    .token-note {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .preview-toggle {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+
+    .preview-toggle:hover { color: var(--text); }
+
+    .config-preview {
+      display: none;
+      margin-top: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      color: var(--green);
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .config-preview.visible { display: block; }
+
+    .build-btn {
+      width: 100%;
+      background: var(--green-dim);
+      border: 1px solid var(--green);
+      border-radius: var(--radius);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .build-btn:hover:not(:disabled) { background: #2ea043; }
+    .build-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status {
+      margin-top: 16px;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status.visible { display: block; }
+
+    .status.success {
+      background: var(--green-bg);
+      border: 1px solid var(--green-dim);
+    }
+
+    .status.error {
+      background: var(--red-bg);
+      border: 1px solid #6e1a14;
+    }
+
+    .status.info {
+      background: var(--yellow-bg);
+      border: 1px solid #5a3d00;
+    }
+
+    .status-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .status.success .status-title { color: var(--green); }
+    .status.error .status-title { color: var(--red); }
+    .status.info .status-title { color: var(--yellow); }
+
+    .status a {
+      color: var(--green);
+      text-decoration: none;
+    }
+
+    .status a:hover { text-decoration: underline; }
+
+    .steps {
+      margin-top: 8px;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .steps li {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 2px 0;
+    }
+
+    .steps li::before {
+      content: '→ ';
+      color: var(--green);
+    }
+
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">&#x1F7E2;</div>
+      <div>
+        <h1>Green VPN Builder</h1>
+        <p>Build a custom APK with your VPN configuration baked in</p>
+      </div>
+    </header>
+
+    <div class="card">
+      <h2>GitHub Auth</h2>
+      <div class="field">
+        <label>Personal Access Token</label>
+        <div class="token-row">
+          <input type="password" id="pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+          <a class="token-link" href="https://github.com/settings/tokens/new?scopes=repo&description=Green+VPN+Builder" target="_blank" rel="noopener">
+            New token ↗
+          </a>
+        </div>
+        <div class="token-note">Needs <code>repo</code> scope (includes <code>actions:write</code>). Used only in your browser.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>VPN Configuration</h2>
+
+      <div class="field">
+        <label>VLESS Keys <span class="hint">one per line</span></label>
+        <textarea id="vless_keys" placeholder="vless://...&#10;vless://..." spellcheck="false"></textarea>
+      </div>
+
+      <div class="field">
+        <div class="toggles">
+          <label class="toggle-field">
+            <input type="checkbox" id="auto_connect">
+            <span>Auto Connect</span>
+          </label>
+          <label class="toggle-field">
+            <input type="checkbox" id="notify" checked>
+            <span>Notifications</span>
+          </label>
+          <label class="toggle-field">
+            <input type="checkbox" id="geo_enabled">
+            <span>Geo Routing</span>
+          </label>
+        </div>
+
+        <div class="geo-fields" id="geo_fields">
+          <div class="field">
+            <label>GeoIP URL <span class="hint">optional</span></label>
+            <input type="text" id="geo_geoip_url" placeholder="https://example.com/geoip.db">
+          </div>
+          <div class="field">
+            <label>GeoSite URL <span class="hint">optional</span></label>
+            <input type="text" id="geo_geosite_url" placeholder="https://example.com/geosite.db">
+          </div>
+        </div>
+      </div>
+
+      <button class="preview-toggle" id="preview_toggle" type="button">&#9654; Preview config JSON</button>
+      <pre class="config-preview" id="config_preview"></pre>
+    </div>
+
+    <button class="build-btn" id="build_btn" type="button">
+      <div class="spinner" id="spinner"></div>
+      <span id="btn_label">Build APK</span>
+    </button>
+
+    <div class="status" id="status">
+      <div class="status-title" id="status_title"></div>
+      <div id="status_body"></div>
+    </div>
+
+    <footer>
+      <a href="https://github.com/0xCLWN/green" target="_blank" rel="noopener">0xCLWN/green</a>
+      &nbsp;&middot;&nbsp;
+      APK artifacts expire after 1 day
+    </footer>
+  </div>
+
+  <script>
+    const OWNER = '0xCLWN';
+    const REPO  = 'green';
+    const WORKFLOW = 'custom-build.yml';
+    const API = 'https://api.github.com';
+
+    const patEl      = document.getElementById('pat');
+    const keysEl     = document.getElementById('vless_keys');
+    const acEl       = document.getElementById('auto_connect');
+    const notifyEl   = document.getElementById('notify');
+    const geoEl      = document.getElementById('geo_enabled');
+    const geoFields  = document.getElementById('geo_fields');
+    const geoIpEl    = document.getElementById('geo_geoip_url');
+    const geoSiteEl  = document.getElementById('geo_geosite_url');
+    const buildBtn   = document.getElementById('build_btn');
+    const btnLabel   = document.getElementById('btn_label');
+    const spinner    = document.getElementById('spinner');
+    const statusEl   = document.getElementById('status');
+    const statusTitle = document.getElementById('status_title');
+    const statusBody = document.getElementById('status_body');
+    const previewToggle = document.getElementById('preview_toggle');
+    const previewEl  = document.getElementById('config_preview');
+
+    // Restore token from sessionStorage
+    const savedPat = sessionStorage.getItem('gh_pat');
+    if (savedPat) patEl.value = savedPat;
+    patEl.addEventListener('input', () => sessionStorage.setItem('gh_pat', patEl.value));
+
+    geoEl.addEventListener('change', () => {
+      geoFields.classList.toggle('visible', geoEl.checked);
+      updatePreview();
+    });
+
+    [keysEl, acEl, notifyEl, geoEl, geoIpEl, geoSiteEl].forEach(el =>
+      el.addEventListener('change', updatePreview));
+    keysEl.addEventListener('input', updatePreview);
+
+    previewToggle.addEventListener('click', () => {
+      const open = previewEl.classList.toggle('visible');
+      previewToggle.textContent = (open ? '▼' : '▶') + ' Preview config JSON';
+      if (open) updatePreview();
+    });
+
+    function buildConfig() {
+      const keys = keysEl.value.trim()
+        ? keysEl.value.split('\n').map(k => k.trim()).filter(Boolean)
+        : [];
+      return {
+        vless_keys: keys,
+        auto_connect: acEl.checked,
+        notify: notifyEl.checked,
+        geo_enabled: geoEl.checked,
+        geo_geoip_url: geoIpEl.value.trim(),
+        geo_geosite_url: geoSiteEl.value.trim(),
+      };
+    }
+
+    function updatePreview() {
+      if (previewEl.classList.contains('visible')) {
+        previewEl.textContent = JSON.stringify(buildConfig(), null, 2);
+      }
+    }
+
+    function setStatus(type, title, body) {
+      statusEl.className = 'status visible ' + type;
+      statusTitle.textContent = title;
+      statusBody.innerHTML = body || '';
+    }
+
+    function setBuilding(loading) {
+      buildBtn.disabled = loading;
+      spinner.style.display = loading ? 'block' : 'none';
+      btnLabel.textContent = loading ? 'Building…' : 'Build APK';
+    }
+
+    async function ghFetch(path, opts = {}) {
+      const pat = patEl.value.trim();
+      return fetch(API + path, {
+        ...opts,
+        headers: {
+          'Authorization': `Bearer ${pat}`,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+          ...(opts.headers || {}),
+        },
+      });
+    }
+
+    buildBtn.addEventListener('click', async () => {
+      const pat = patEl.value.trim();
+      if (!pat) {
+        setStatus('error', 'Missing token', 'Enter a GitHub Personal Access Token above.');
+        return;
+      }
+
+      const config = buildConfig();
+      if (!config.vless_keys.length) {
+        setStatus('info', 'No VPN keys', 'Add at least one VLESS key before building.');
+        return;
+      }
+
+      setBuilding(true);
+      setStatus('info', 'Triggering build…', '');
+
+      let dispatchResp;
+      try {
+        const configJson = JSON.stringify(config, null, 2);
+        // btoa with UTF-8 support
+        const configB64 = btoa(unescape(encodeURIComponent(configJson)));
+
+        dispatchResp = await ghFetch(
+          `/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ ref: 'main', inputs: { config_b64: configB64 } }),
+          }
+        );
+      } catch (e) {
+        setBuilding(false);
+        setStatus('error', 'Network error', e.message);
+        return;
+      }
+
+      if (dispatchResp.status !== 204) {
+        setBuilding(false);
+        let msg = dispatchResp.statusText;
+        try { const j = await dispatchResp.json(); msg = j.message || msg; } catch {}
+        setStatus('error', 'Build failed to trigger', msg);
+        return;
+      }
+
+      // Poll for the new run URL (workflow dispatch is async — wait a moment)
+      let runUrl = null;
+      for (let i = 0; i < 6; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const runsResp = await ghFetch(
+            `/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW}/runs?per_page=1`
+          );
+          if (runsResp.ok) {
+            const data = await runsResp.json();
+            runUrl = data.workflow_runs?.[0]?.html_url || null;
+            if (runUrl) break;
+          }
+        } catch {}
+      }
+
+      setBuilding(false);
+
+      const runLink = runUrl
+        ? `<a href="${runUrl}" target="_blank" rel="noopener">View workflow run ↗</a>`
+        : `<a href="https://github.com/${OWNER}/${REPO}/actions" target="_blank" rel="noopener">View GitHub Actions ↗</a>`;
+
+      setStatus('success', 'Build triggered!',
+        `${runLink}<ul class="steps">
+          <li>Build takes ~5–10 minutes</li>
+          <li>Open the run link and wait for it to finish</li>
+          <li>Download <strong>green-custom.apk</strong> from the Artifacts section</li>
+          <li>Artifact expires in 1 day</li>
+        </ul>`
+      );
+    });
+  </script>
+</body>
+</html>

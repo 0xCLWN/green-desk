@@ -1,0 +1,52 @@
+name: Custom Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      config_b64:
+        description: 'Base64-encoded default_config.json'
+        required: true
+        type: string
+
+jobs:
+  patch-and-sign:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download latest release APK
+        run: gh release download --repo ${{ github.repository }} latest --pattern "*.apk" --output original.apk
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Patch config
+        env:
+          CONFIG_B64: ${{ inputs.config_b64 }}
+        run: |
+          mkdir -p assets
+          echo "$CONFIG_B64" | base64 -d > assets/default_config.json
+          cp original.apk patched.apk
+          zip -u patched.apk assets/default_config.json
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > green-release.jks
+
+      - name: Zipalign and sign APK
+        run: |
+          TOOLS=$(find "$ANDROID_SDK_ROOT/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
+          "$TOOLS/zipalign" -v 4 patched.apk aligned.apk
+          "$TOOLS/apksigner" sign \
+            --ks green-release.jks \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out green-custom.apk \
+            aligned.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: green-custom
+          path: green-custom.apk
+          retention-days: 1
