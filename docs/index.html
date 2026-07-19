@@ -170,6 +170,79 @@
 
     .geo-fields.visible { display: block; }
 
+    .sign-tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .sign-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sign-tab:first-child { border-right: 1px solid var(--border); }
+
+    .sign-tab.active {
+      background: var(--green-dim);
+      color: #fff;
+    }
+
+    .sign-tab:hover:not(.active) {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .sign-section { display: none; }
+    .sign-section.visible { display: block; }
+
+    .sign-default-note {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      padding: 7px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    input[type="file"]::-webkit-file-upload-button {
+      background: var(--border);
+      border: none;
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 4px 10px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
     .token-row {
       display: flex;
       gap: 8px;
@@ -405,6 +478,40 @@
       <pre class="config-preview" id="config_preview"></pre>
     </div>
 
+    <div class="card">
+      <h2>Signing Key</h2>
+
+      <div class="sign-tabs">
+        <button class="sign-tab active" id="tab_default" type="button">Use repo default</button>
+        <button class="sign-tab" id="tab_custom" type="button">Custom keystore</button>
+      </div>
+
+      <div class="sign-section visible" id="section_default">
+        <div class="sign-default-note">APK will be signed with the keystore stored in this repo's GitHub Secrets.</div>
+      </div>
+
+      <div class="sign-section" id="section_custom">
+        <div class="field">
+          <label>Keystore file <span class="hint">.jks or .p12</span></label>
+          <input type="file" id="keystore_file" accept=".jks,.p12,.keystore">
+        </div>
+        <div class="field">
+          <label>Key alias</label>
+          <input type="text" id="key_alias" placeholder="my-key-alias" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Store password</label>
+            <input type="password" id="store_password" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label>Key password</label>
+            <input type="password" id="key_password" autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <button class="build-btn" id="build_btn" type="button">
       <div class="spinner" id="spinner"></div>
       <span id="btn_label">Build APK</span>
@@ -442,8 +549,34 @@
     const statusEl   = document.getElementById('status');
     const statusTitle = document.getElementById('status_title');
     const statusBody = document.getElementById('status_body');
-    const previewToggle = document.getElementById('preview_toggle');
-    const previewEl  = document.getElementById('config_preview');
+    const previewToggle  = document.getElementById('preview_toggle');
+    const previewEl      = document.getElementById('config_preview');
+    const tabDefault     = document.getElementById('tab_default');
+    const tabCustom      = document.getElementById('tab_custom');
+    const sectionDefault = document.getElementById('section_default');
+    const sectionCustom  = document.getElementById('section_custom');
+    const keystoreFile   = document.getElementById('keystore_file');
+    const keyAliasEl     = document.getElementById('key_alias');
+    const storePassEl    = document.getElementById('store_password');
+    const keyPassEl      = document.getElementById('key_password');
+
+    let useCustomSigning = false;
+
+    tabDefault.addEventListener('click', () => {
+      useCustomSigning = false;
+      tabDefault.classList.add('active');
+      tabCustom.classList.remove('active');
+      sectionDefault.classList.add('visible');
+      sectionCustom.classList.remove('visible');
+    });
+
+    tabCustom.addEventListener('click', () => {
+      useCustomSigning = true;
+      tabCustom.classList.add('active');
+      tabDefault.classList.remove('active');
+      sectionCustom.classList.add('visible');
+      sectionDefault.classList.remove('visible');
+    });
 
     // Restore token from sessionStorage
     const savedPat = sessionStorage.getItem('gh_pat');
@@ -530,14 +663,32 @@
       let dispatchResp;
       try {
         const configJson = JSON.stringify(config, null, 2);
-        // btoa with UTF-8 support
         const configB64 = btoa(unescape(encodeURIComponent(configJson)));
+
+        const inputs = { config_b64: configB64 };
+
+        if (useCustomSigning) {
+          const file = keystoreFile.files[0];
+          if (!file) {
+            setBuilding(false);
+            setStatus('error', 'Missing keystore', 'Select a .jks or .p12 keystore file.');
+            return;
+          }
+          const buf = await file.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let bin = '';
+          for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+          inputs.keystore_b64    = btoa(bin);
+          inputs.key_alias       = keyAliasEl.value.trim();
+          inputs.store_password  = storePassEl.value;
+          inputs.key_password    = keyPassEl.value;
+        }
 
         dispatchResp = await ghFetch(
           `/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
           {
             method: 'POST',
-            body: JSON.stringify({ ref: 'main', inputs: { config_b64: configB64 } }),
+            body: JSON.stringify({ ref: 'main', inputs }),
           }
         );
       } catch (e) {
@@ -578,7 +729,7 @@
 
       setStatus('success', 'Build triggered!',
         `${runLink}<ul class="steps">
-          <li>Build takes ~5–10 minutes</li>
+          <li>Build takes ~30–60 seconds</li>
           <li>Open the run link and wait for it to finish</li>
           <li>Download <strong>green-custom.apk</strong> from the Artifacts section</li>
           <li>Artifact expires in 1 day</li>

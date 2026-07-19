@@ -7,6 +7,22 @@ on:
         description: 'Base64-encoded default_config.json'
         required: true
         type: string
+      keystore_b64:
+        description: 'Base64-encoded keystore (optional, uses repo default if omitted)'
+        required: false
+        type: string
+      key_alias:
+        description: 'Key alias (required if keystore_b64 is set)'
+        required: false
+        type: string
+      store_password:
+        description: 'Keystore password (required if keystore_b64 is set)'
+        required: false
+        type: string
+      key_password:
+        description: 'Key password (required if keystore_b64 is set)'
+        required: false
+        type: string
 
 jobs:
   patch-and-sign:
@@ -29,18 +45,39 @@ jobs:
           cp original.apk patched.apk
           zip -u patched.apk assets/default_config.json
 
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > green-release.jks
-
-      - name: Zipalign and sign APK
+      - name: Prepare keystore and sign
+        env:
+          CUSTOM_KS_B64:     ${{ inputs.keystore_b64 }}
+          CUSTOM_ALIAS:      ${{ inputs.key_alias }}
+          CUSTOM_STORE_PASS: ${{ inputs.store_password }}
+          CUSTOM_KEY_PASS:   ${{ inputs.key_password }}
+          DEFAULT_KS_B64:    ${{ secrets.KEYSTORE_B64 }}
+          DEFAULT_ALIAS:     ${{ secrets.KEY_ALIAS }}
+          DEFAULT_STORE_PASS: ${{ secrets.STORE_PASSWORD }}
+          DEFAULT_KEY_PASS:  ${{ secrets.KEY_PASSWORD }}
         run: |
+          if [ -n "$CUSTOM_KS_B64" ]; then
+            echo "$CUSTOM_KS_B64" | base64 -d > signing.jks
+            ALIAS="$CUSTOM_ALIAS"
+            STORE_PASS="$CUSTOM_STORE_PASS"
+            KEY_PASS="$CUSTOM_KEY_PASS"
+          else
+            echo "$DEFAULT_KS_B64" | base64 -d > signing.jks
+            ALIAS="$DEFAULT_ALIAS"
+            STORE_PASS="$DEFAULT_STORE_PASS"
+            KEY_PASS="$DEFAULT_KEY_PASS"
+          fi
+
+          echo "::add-mask::$STORE_PASS"
+          echo "::add-mask::$KEY_PASS"
+
           TOOLS=$(find "$ANDROID_SDK_ROOT/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
           "$TOOLS/zipalign" -v 4 patched.apk aligned.apk
           "$TOOLS/apksigner" sign \
-            --ks green-release.jks \
-            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.STORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --ks signing.jks \
+            --ks-key-alias "$ALIAS" \
+            --ks-pass "pass:$STORE_PASS" \
+            --key-pass "pass:$KEY_PASS" \
             --out green-custom.apk \
             aligned.apk
 
