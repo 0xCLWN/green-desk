@@ -43,36 +43,6 @@ jobs:
           name: Green-arm64.dmg
           path: Green-arm64.dmg
 
-  build-mac-x86:
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: xray-core/go.mod
-          cache-dependency-path: xray-core/go.sum
-
-      - name: Build xray (darwin/amd64)
-        run: make xray-mac-intel
-
-      - name: Package DMG
-        run: ./gradlew :composeApp:packageDmg -PbakedKeys="${{ github.event.inputs.baked_keys || secrets.BAKED_KEYS }}"
-
-      - name: Rename
-        run: mv composeApp/build/compose/binaries/main/dmg/Green-*.dmg Green-x86_64.dmg
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Green-x86_64.dmg
-          path: Green-x86_64.dmg
 
   build-windows:
     runs-on: windows-latest
@@ -109,7 +79,7 @@ jobs:
           path: Green-windows.msi
 
   release:
-    needs: [build-mac-arm64, build-mac-x86, build-windows]
+    needs: [build-mac-arm64, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
