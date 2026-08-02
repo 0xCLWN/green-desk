@@ -9,7 +9,9 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"os/signal"
 	"path"
+	"syscall"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -57,6 +59,7 @@ var (
 	configDir   string
 	dump        = cmdRun.Flag.Bool("dump", false, "Dump merged config only, without launching Xray server.")
 	test        = cmdRun.Flag.Bool("test", false, "Test config file only, without launching Xray server.")
+	headless    = cmdRun.Flag.Bool("headless", false, "Run without TUI or instance lock (for embedding).")
 	format      = cmdRun.Flag.String("format", "auto", "Format of input file.")
 
 	/* We have to do this here because Golang's Test will also need to parse flag, before
@@ -83,6 +86,23 @@ func executeRun(_ *base.Command, _ []string) {
 		}
 		fmt.Println("Configuration OK.")
 		os.Exit(0)
+	}
+
+	if *headless {
+		srv, err := startXray()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to start xray:", err)
+			os.Exit(1)
+		}
+		if err := srv.Start(); err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to start xray:", err)
+			os.Exit(1)
+		}
+		defer srv.Close()
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+		<-sig
+		return
 	}
 
 	xui.Start(&xui.Deps{
