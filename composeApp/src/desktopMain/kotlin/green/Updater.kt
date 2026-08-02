@@ -25,7 +25,7 @@ suspend fun checkForUpdate(settings: AppSettings): UpdateInfo? = withContext(Dis
         conn.connectTimeout = 10_000
         conn.readTimeout = 10_000
 
-        val json = Json.parseToJsonElement(conn.inputStream.bufferedReader().readText()).jsonObject
+        val json = conn.inputStream.use { Json.parseToJsonElement(it.bufferedReader().readText()).jsonObject }
         val tag = json["tag_name"]?.jsonPrimitive?.content ?: return@runCatching null
         val assets = json["assets"]?.jsonArray ?: return@runCatching null
 

@@ -2,58 +2,69 @@ package green
 
 import green.model.VlessKey
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.net.ServerSocket
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
 class XrayProcess(private val appDir: Path) {
-    private var process: Process? = null
+    @Volatile private var process: Process? = null
     val isRunning get() = process?.isAlive == true
 
-    suspend fun start(key: VlessKey, socksPort: Int = 10808, httpPort: Int = 10809): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            stop()
-            val binary = ensureBinary()
-            val api = freePort()
-            val configFile = appDir.resolve("config.json")
-            val key2json = ProcessBuilder(
-                binary.toString(), "key2json",
-                "--socks-port", "$socksPort",
-                "--http-port", "$httpPort",
-                "--api-port", "$api",
-                key.uri,
-            ).directory(appDir.toFile()).start()
-            val json = key2json.inputStream.bufferedReader().readText()
-            if (key2json.waitFor() != 0) error("key2json failed: ${key2json.errorStream.bufferedReader().readText()}")
-            configFile.writeText(json)
+    suspend fun start(key: VlessKey, socksPort: Int = 10808, httpPort: Int = 10809): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                stop()
+                val binary = ensureBinary()
+                val api = freePort()
+                val configFile = appDir.resolve("config.json")
 
-            val logFile = appDir.resolve("xray.log").toFile()
-            val proc = ProcessBuilder(binary.toString(), "run", "-c", configFile.toString())
-                .directory(appDir.toFile())
-                .redirectErrorStream(true)
-                .also { pb ->
-                    pb.environment()["XRAY_LOCATION_ASSET"] = appDir.toString()
+                // redirectErrorStream so we never deadlock on a full stderr pipe.
+                val key2json = ProcessBuilder(
+                    binary.toString(), "key2json",
+                    "--socks-port", "$socksPort",
+                    "--http-port", "$httpPort",
+                    "--api-port", "$api",
+                    key.uri,
+                ).directory(appDir.toFile()).redirectErrorStream(true).start()
+                val output = key2json.inputStream.bufferedReader().readText()
+                if (key2json.waitFor() != 0) error("key2json failed: $output")
+                configFile.writeText(output)
+
+                val logFile = appDir.resolve("xray.log").toFile()
+                val proc = ProcessBuilder(binary.toString(), "run", "-c", configFile.toString())
+                    .directory(appDir.toFile())
+                    .redirectErrorStream(true)
+                    .also { it.environment()["XRAY_LOCATION_ASSET"] = appDir.toString() }
+                    .start()
+                process = proc
+
+                // Drain output so the pipe never blocks.
+                Thread {
+                    logFile.outputStream().use { out -> proc.inputStream.copyTo(out) }
+                }.apply { isDaemon = true; start() }
+
+                // Suspending delay keeps the coroutine cancellable (unlike Thread.sleep).
+                delay(500)
+                if (!proc.isAlive) {
+                    error("xray exited (code ${proc.exitValue()}), see ${logFile.absolutePath}")
                 }
-                .start()
-            process = proc
 
-            // Drain output to log file so the pipe never blocks.
-            Thread {
-                proc.inputStream.use { it.copyTo(logFile.outputStream()) }
-            }.apply { isDaemon = true; start() }
-
-            // Give xray a moment to bind ports, then check it's still alive.
-            Thread.sleep(500)
-            if (!proc.isAlive) {
-                error("xray exited (code ${proc.exitValue()}), check ${logFile.absolutePath}")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
-    }
 
-    fun stop() {
-        process?.destroy()
+    // @Synchronized so onExit() and an in-flight start() can't race on `process`.
+    @Synchronized fun stop() {
+        process?.let { p ->
+            p.destroy()
+            if (!p.waitFor(3, TimeUnit.SECONDS)) p.destroyForcibly()
+        }
         process = null
     }
 
@@ -76,8 +87,4 @@ class XrayProcess(private val appDir: Path) {
     }
 }
 
-private fun freePort(): Int {
-    // Let the OS assign a free port in the ephemeral range, then immediately release it.
-    // There's a brief TOCTOU window, but it's negligible for local proxy ports.
-    return ServerSocket(0).use { it.localPort }
-}
+private fun freePort(): Int = ServerSocket(0).use { it.localPort }
