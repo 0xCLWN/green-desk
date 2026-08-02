@@ -4,6 +4,7 @@ data class AppState(
     val keys: List<VlessKey> = emptyList(),
     val activeKeyId: String? = null,
     val running: Boolean = false,
+    val sysProxyEnabled: Boolean = false,
     val error: String? = null,
     val upBytes: Long = 0L,
     val downBytes: Long = 0L,

@@ -22,6 +22,7 @@ fun main() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val vm = AppViewModel(
         keyStore = KeyStore(appDir),
+        settingsStore = SettingsStore(appDir),
         xray = XrayProcess(appDir),
         scope = scope,
     )
@@ -48,6 +49,11 @@ fun main() {
                     enabled = state.activeKeyId != null,
                     onClick = vm::toggleProxy,
                 )
+                CheckboxItem(
+                    text = "System Proxy",
+                    checked = state.sysProxyEnabled,
+                    onCheckedChange = { vm.toggleSysProxy() },
+                )
                 Separator()
                 Item("Quit", onClick = {
                     vm.onExit()
@@ -70,6 +76,7 @@ fun main() {
             MainWindow(
                 state = state,
                 onToggleProxy = vm::toggleProxy,
+                onToggleSysProxy = vm::toggleSysProxy,
                 onAddKey = vm::addKey,
                 onRemoveKey = vm::removeKey,
                 onActivateKey = vm::activateKey,

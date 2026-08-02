@@ -30,6 +30,7 @@ import green.model.isBaked
 fun MainWindow(
     state: AppState,
     onToggleProxy: () -> Unit,
+    onToggleSysProxy: () -> Unit,
     onAddKey: (uri: String, name: String) -> Unit,
     onRemoveKey: (id: String) -> Unit,
     onActivateKey: (id: String) -> Unit,
@@ -39,7 +40,7 @@ fun MainWindow(
     MaterialTheme(colorScheme = darkColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                StatusBar(state = state, onToggle = onToggleProxy)
+                StatusBar(state = state, onToggle = onToggleProxy, onToggleSysProxy = onToggleSysProxy)
                 Spacer(Modifier.height(16.dp))
                 KeyListHeader(onAdd = { showAddDialog = true })
                 Spacer(Modifier.height(8.dp))
@@ -73,7 +74,7 @@ fun MainWindow(
 }
 
 @Composable
-private fun StatusBar(state: AppState, onToggle: () -> Unit) {
+private fun StatusBar(state: AppState, onToggle: () -> Unit, onToggleSysProxy: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -107,14 +108,32 @@ private fun StatusBar(state: AppState, onToggle: () -> Unit) {
                 )
             }
         }
-        Button(
-            onClick = onToggle,
-            enabled = state.activeKeyId != null,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (state.running) Color(0xFF6B7280) else Color(0xFF22C55E),
-            ),
-        ) {
-            Text(if (state.running) "Stop" else "Start")
+        Column(horizontalAlignment = Alignment.End) {
+            Button(
+                onClick = onToggle,
+                enabled = state.activeKeyId != null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (state.running) Color(0xFF6B7280) else Color(0xFF22C55E),
+                ),
+            ) {
+                Text(if (state.running) "Stop" else "Start")
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable(onClick = onToggleSysProxy),
+            ) {
+                Text(
+                    text = "System Proxy",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(4.dp))
+                Switch(
+                    checked = state.sysProxyEnabled,
+                    onCheckedChange = { onToggleSysProxy() },
+                    modifier = Modifier.height(20.dp),
+                )
+            }
         }
     }
 }

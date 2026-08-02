@@ -13,14 +13,20 @@ import java.util.UUID
 
 class AppViewModel(
     private val keyStore: KeyStore,
+    private val settingsStore: SettingsStore,
     private val xray: XrayProcess,
     private val scope: CoroutineScope,
 ) {
-    private val _state = MutableStateFlow(AppState(keys = mergeKeys(keyStore.load(), loadBakedKeys())))
+    private val settings = settingsStore.load()
+    private val _state = MutableStateFlow(
+        AppState(
+            keys = mergeKeys(keyStore.load(), loadBakedKeys()),
+            sysProxyEnabled = settings.sysProxyEnabled,
+        )
+    )
     val state: StateFlow<AppState> = _state.asStateFlow()
 
     init {
-        // persist any newly added baked keys
         val current = _state.value
         keyStore.save(current.keys.filter { !it.isBaked })
         if (current.activeKeyId == null) {
@@ -68,13 +74,22 @@ class AppViewModel(
         else scope.launch { startProxy() }
     }
 
+    fun toggleSysProxy() {
+        scope.launch {
+            val enable = !_state.value.sysProxyEnabled
+            setSysProxy(enable = enable)
+            _state.update { it.copy(sysProxyEnabled = enable) }
+            settingsStore.save(AppSettings(sysProxyEnabled = enable))
+        }
+    }
+
     private suspend fun startProxy() {
         val key = _state.value.activeKey ?: return
         _state.update { it.copy(error = null) }
         xray.start(key).fold(
             onSuccess = {
                 _state.update { it.copy(running = true) }
-                setSysProxy(enable = true)
+                if (_state.value.sysProxyEnabled) setSysProxy(enable = true)
             },
             onFailure = { e ->
                 _state.update { it.copy(error = e.message) }
@@ -83,7 +98,7 @@ class AppViewModel(
     }
 
     private suspend fun stopProxy() {
-        setSysProxy(enable = false)
+        if (_state.value.sysProxyEnabled) setSysProxy(enable = false)
         xray.stop()
         _state.update { it.copy(running = false) }
     }
