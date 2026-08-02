@@ -16,7 +16,16 @@ class XrayProcess(private val appDir: Path) {
             stop()
             val binary = ensureBinary()
             val configFile = appDir.resolve("config.json")
-            configFile.writeText(buildXrayConfig(key))
+            val key2json = ProcessBuilder(
+                binary.toString(), "key2json",
+                "--socks-port", "10808",
+                "--http-port", "10809",
+                "--api-port", "8888",
+                key.uri,
+            ).directory(appDir.toFile()).start()
+            val json = key2json.inputStream.bufferedReader().readText()
+            if (key2json.waitFor() != 0) error("key2json failed: ${key2json.errorStream.bufferedReader().readText()}")
+            configFile.writeText(json)
 
             process = ProcessBuilder(binary.toString(), "run", "-c", configFile.toString())
                 .directory(appDir.toFile())
