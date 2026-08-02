@@ -9,6 +9,8 @@ import kotlin.io.path.writeText
 @Serializable
 data class AppSettings(
     val sysProxyEnabled: Boolean = false,
+    val socksPort: Int = 10808,
+    val httpPort: Int = 10809,
     val updateCheckedAt: Long = 0,
     val updateTag: String = "",
     val updateUrl: String = "",

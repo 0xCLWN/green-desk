@@ -3,6 +3,7 @@ package green
 import green.model.VlessKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.ServerSocket
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.*
@@ -11,16 +12,17 @@ class XrayProcess(private val appDir: Path) {
     private var process: Process? = null
     val isRunning get() = process?.isAlive == true
 
-    suspend fun start(key: VlessKey): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun start(key: VlessKey, socksPort: Int = 10808, httpPort: Int = 10809): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
             stop()
             val binary = ensureBinary()
+            val api = freePort()
             val configFile = appDir.resolve("config.json")
             val key2json = ProcessBuilder(
                 binary.toString(), "key2json",
-                "--socks-port", "10808",
-                "--http-port", "10809",
-                "--api-port", "8888",
+                "--socks-port", "$socksPort",
+                "--http-port", "$httpPort",
+                "--api-port", "$api",
                 key.uri,
             ).directory(appDir.toFile()).start()
             val json = key2json.inputStream.bufferedReader().readText()
@@ -59,4 +61,10 @@ class XrayProcess(private val appDir: Path) {
         }
         return dest
     }
+}
+
+private fun freePort(): Int {
+    // Let the OS assign a free port in the ephemeral range, then immediately release it.
+    // There's a brief TOCTOU window, but it's negligible for local proxy ports.
+    return ServerSocket(0).use { it.localPort }
 }

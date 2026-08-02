@@ -23,6 +23,8 @@ class AppViewModel(
         AppState(
             keys = mergeKeys(keyStore.load(), loadBakedKeys()),
             sysProxyEnabled = settings.sysProxyEnabled,
+            socksPort = settings.socksPort,
+            httpPort = settings.httpPort,
         )
     )
     val state: StateFlow<AppState> = _state.asStateFlow()
@@ -72,26 +74,31 @@ class AppViewModel(
     }
 
     fun toggleProxy() {
-        if (xray.isRunning) scope.launch { stopProxy() }
+        if (_state.value.running) scope.launch { stopProxy() }
         else scope.launch { startProxy() }
     }
 
     fun toggleSysProxy() {
-        scope.launch {
-            val enable = !_state.value.sysProxyEnabled
-            setSysProxy(enable = enable)
-            _state.update { it.copy(sysProxyEnabled = enable) }
-            settingsStore.save(AppSettings(sysProxyEnabled = enable))
-        }
+        val s = _state.value
+        val enable = !s.sysProxyEnabled
+        _state.update { it.copy(sysProxyEnabled = enable) }
+        settingsStore.save(settings.copy(sysProxyEnabled = enable))
+        scope.launch { setSysProxy(enable = enable, socksPort = s.socksPort, httpPort = s.httpPort) }
+    }
+
+    fun updatePorts(socksPort: Int, httpPort: Int) {
+        _state.update { it.copy(socksPort = socksPort, httpPort = httpPort) }
+        settingsStore.save(settings.copy(socksPort = socksPort, httpPort = httpPort))
     }
 
     private suspend fun startProxy() {
         val key = _state.value.activeKey ?: return
+        val s = _state.value
         _state.update { it.copy(error = null) }
-        xray.start(key).fold(
+        xray.start(key, s.socksPort, s.httpPort).fold(
             onSuccess = {
                 _state.update { it.copy(running = true) }
-                if (_state.value.sysProxyEnabled) setSysProxy(enable = true)
+                if (_state.value.sysProxyEnabled) setSysProxy(enable = true, socksPort = s.socksPort, httpPort = s.httpPort)
             },
             onFailure = { e ->
                 _state.update { it.copy(error = e.message) }
@@ -100,7 +107,8 @@ class AppViewModel(
     }
 
     private suspend fun stopProxy() {
-        if (_state.value.sysProxyEnabled) setSysProxy(enable = false)
+        val s = _state.value
+        if (s.sysProxyEnabled) setSysProxy(enable = false, socksPort = s.socksPort, httpPort = s.httpPort)
         xray.stop()
         _state.update { it.copy(running = false) }
     }

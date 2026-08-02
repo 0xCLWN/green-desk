@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,10 +35,12 @@ fun MainWindow(
     onAddKey: (uri: String, name: String) -> Unit,
     onRemoveKey: (id: String) -> Unit,
     onActivateKey: (id: String) -> Unit,
+    onUpdatePorts: (socksPort: Int, httpPort: Int) -> Unit,
     onInstallUpdate: () -> Unit,
     onDismissUpdate: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
     MaterialTheme(colorScheme = darkColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -53,7 +56,7 @@ fun MainWindow(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-                KeyListHeader(onAdd = { showAddDialog = true })
+                KeyListHeader(onAdd = { showAddDialog = true }, onSettings = { showSettingsDialog = true })
                 Spacer(Modifier.height(8.dp))
                 KeyList(
                     keys = state.keys,
@@ -73,6 +76,18 @@ fun MainWindow(
         }
     }
 
+    if (showSettingsDialog) {
+        SettingsDialog(
+            socksPort = state.socksPort,
+            httpPort = state.httpPort,
+            onDismiss = { showSettingsDialog = false },
+            onConfirm = { s, h ->
+                onUpdatePorts(s, h)
+                showSettingsDialog = false
+            },
+        )
+    }
+
     if (showAddDialog) {
         AddKeyDialog(
             onDismiss = { showAddDialog = false },
@@ -82,44 +97,45 @@ fun MainWindow(
             },
         )
     }
+
 }
 
 @Composable
 private fun StatusBar(state: AppState, onToggle: () -> Unit, onToggleSysProxy: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(if (state.running) Color(0xFF22C55E) else Color(0xFF6B7280))
-        )
-        Spacer(Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = if (state.running) "Connected" else "Disconnected",
-                style = MaterialTheme.typography.titleMedium,
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(if (state.running) Color(0xFF22C55E) else Color(0xFF6B7280))
             )
-            if (state.running && (state.upBytes > 0 || state.downBytes > 0)) {
+            Spacer(Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "↑ ${state.upBytes.toHumanBytes()}  ↓ ${state.downBytes.toHumanBytes()}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = if (state.running) "Connected" else "Disconnected",
+                    style = MaterialTheme.typography.titleMedium,
                 )
+                if (state.running && (state.upBytes > 0 || state.downBytes > 0)) {
+                    Text(
+                        text = "↑ ${state.upBytes.toHumanBytes()}  ↓ ${state.downBytes.toHumanBytes()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                state.activeKey?.let { key ->
+                    Text(
+                        text = key.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
-            state.activeKey?.let { key ->
-                Text(
-                    text = key.name,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        Column(horizontalAlignment = Alignment.End) {
             Button(
                 onClick = onToggle,
                 enabled = state.activeKeyId != null,
@@ -129,28 +145,30 @@ private fun StatusBar(state: AppState, onToggle: () -> Unit, onToggleSysProxy: (
             ) {
                 Text(if (state.running) "Stop" else "Start")
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(onClick = onToggleSysProxy),
-            ) {
-                Text(
-                    text = "System Proxy",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.width(4.dp))
-                Switch(
-                    checked = state.sysProxyEnabled,
-                    onCheckedChange = { onToggleSysProxy() },
-                    modifier = Modifier.height(20.dp),
-                )
-            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleSysProxy),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Text(
+                text = "System Proxy",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Switch(
+                checked = state.sysProxyEnabled,
+                onCheckedChange = { onToggleSysProxy() },
+                modifier = Modifier.padding(start = 4.dp),
+            )
         }
     }
 }
 
 @Composable
-private fun KeyListHeader(onAdd: () -> Unit) {
+private fun KeyListHeader(onAdd: () -> Unit, onSettings: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -160,6 +178,9 @@ private fun KeyListHeader(onAdd: () -> Unit) {
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onSettings, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Settings, contentDescription = "Settings", modifier = Modifier.size(16.dp))
+        }
         IconButton(onClick = onAdd, modifier = Modifier.size(32.dp)) {
             Icon(Icons.Default.Add, contentDescription = "Add key")
         }

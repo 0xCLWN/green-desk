@@ -5,6 +5,8 @@ data class AppState(
     val activeKeyId: String? = null,
     val running: Boolean = false,
     val sysProxyEnabled: Boolean = false,
+    val socksPort: Int = 10808,
+    val httpPort: Int = 10809,
     val error: String? = null,
     val upBytes: Long = 0L,
     val downBytes: Long = 0L,

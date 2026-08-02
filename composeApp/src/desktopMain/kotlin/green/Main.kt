@@ -30,6 +30,9 @@ fun main() {
     application(exitProcessOnExit = true) {
         val state by vm.state.collectAsState()
         var windowVisible by remember { mutableStateOf(true) }
+        var focusTrigger by remember { mutableStateOf(0) }
+
+        fun openWindow() { windowVisible = true; focusTrigger++ }
 
         Tray(
             icon = circlePainter(
@@ -40,9 +43,9 @@ fun main() {
                 }
             ),
             tooltip = if (state.running) "Green — Connected" else "Green — Disconnected",
-            onAction = { windowVisible = true },
+            onAction = { openWindow() },
             menu = {
-                Item("Open", onClick = { windowVisible = true })
+                Item("Open", onClick = { openWindow() })
                 Separator()
                 Item(
                     text = if (state.running) "Disconnect" else "Connect",
@@ -70,7 +73,7 @@ fun main() {
             resizable = false,
         ) {
             val awtWindow = window
-            LaunchedEffect(windowVisible) {
+            LaunchedEffect(focusTrigger) {
                 if (windowVisible) bringToFront(awtWindow)
             }
             MainWindow(
@@ -80,6 +83,7 @@ fun main() {
                 onAddKey = vm::addKey,
                 onRemoveKey = vm::removeKey,
                 onActivateKey = vm::activateKey,
+                onUpdatePorts = vm::updatePorts,
                 onInstallUpdate = { state.availableUpdate?.let(vm::installUpdate) },
                 onDismissUpdate = vm::dismissUpdate,
             )
