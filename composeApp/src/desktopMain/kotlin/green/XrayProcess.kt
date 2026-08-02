@@ -35,7 +35,7 @@ class XrayProcess(private val appDir: Path) {
                 configFile.writeText(output)
 
                 val logFile = appDir.resolve("xray.log").toFile()
-                val proc = ProcessBuilder(binary.toString(), "run", "-c", configFile.toString())
+                val proc = ProcessBuilder(binary.toString(), "run", "--headless", "-c", configFile.toString())
                     .directory(appDir.toFile())
                     .redirectErrorStream(true)
                     .also { it.environment()["XRAY_LOCATION_ASSET"] = appDir.toString() }
@@ -50,7 +50,10 @@ class XrayProcess(private val appDir: Path) {
                 // Suspending delay keeps the coroutine cancellable (unlike Thread.sleep).
                 delay(500)
                 if (!proc.isAlive) {
-                    error("xray exited (code ${proc.exitValue()}), see ${logFile.absolutePath}")
+                    val tail = logFile.takeIf { it.exists() }
+                        ?.readLines()?.takeLast(5)?.joinToString("\n")
+                        ?: "(no log)"
+                    error("xray exited (code ${proc.exitValue()})\n$tail")
                 }
 
                 Result.success(Unit)
@@ -70,7 +73,6 @@ class XrayProcess(private val appDir: Path) {
 
     private fun ensureBinary(): Path {
         val dest = appDir.resolve(xrayBinaryName())
-        if (dest.exists()) return dest
 
         val resourceName = xrayResourceName()
         val stream = Thread.currentThread().contextClassLoader.getResourceAsStream(resourceName)
