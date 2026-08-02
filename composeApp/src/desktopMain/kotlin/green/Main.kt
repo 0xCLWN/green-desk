@@ -110,6 +110,6 @@ private fun bringToFront(window: AwtWindow) {
 private fun circlePainter(color: Color): Painter = object : Painter() {
     override val intrinsicSize = Size(22f, 22f)
     override fun DrawScope.onDraw() {
-        drawCircle(color, radius = size.minDimension / 2f - 1f)
+        drawCircle(color, radius = size.minDimension / 2f - 3f)
     }
 }

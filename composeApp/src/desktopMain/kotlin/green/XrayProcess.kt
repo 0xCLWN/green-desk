@@ -29,13 +29,26 @@ class XrayProcess(private val appDir: Path) {
             if (key2json.waitFor() != 0) error("key2json failed: ${key2json.errorStream.bufferedReader().readText()}")
             configFile.writeText(json)
 
-            process = ProcessBuilder(binary.toString(), "run", "-c", configFile.toString())
+            val logFile = appDir.resolve("xray.log").toFile()
+            val proc = ProcessBuilder(binary.toString(), "run", "-c", configFile.toString())
                 .directory(appDir.toFile())
                 .redirectErrorStream(true)
                 .also { pb ->
                     pb.environment()["XRAY_LOCATION_ASSET"] = appDir.toString()
                 }
                 .start()
+            process = proc
+
+            // Drain output to log file so the pipe never blocks.
+            Thread {
+                proc.inputStream.use { it.copyTo(logFile.outputStream()) }
+            }.apply { isDaemon = true; start() }
+
+            // Give xray a moment to bind ports, then check it's still alive.
+            Thread.sleep(500)
+            if (!proc.isAlive) {
+                error("xray exited (code ${proc.exitValue()}), check ${logFile.absolutePath}")
+            }
         }
     }
 
