@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -12,8 +13,10 @@ import androidx.compose.ui.unit.dp
 fun SettingsDialog(
     socksPort: Int,
     httpPort: Int,
+    checkingUpdate: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (socksPort: Int, httpPort: Int) -> Unit,
+    onCheckUpdate: () -> Unit,
 ) {
     var socksText by remember { mutableStateOf(socksPort.toString()) }
     var httpText by remember { mutableStateOf(httpPort.toString()) }
@@ -23,7 +26,7 @@ fun SettingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Proxy Ports") },
+        title = { Text("Settings") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -44,6 +47,22 @@ fun SettingsDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "Check for updates",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    if (checkingUpdate) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        TextButton(onClick = onCheckUpdate) { Text("Check") }
+                    }
+                }
             }
         },
         confirmButton = {

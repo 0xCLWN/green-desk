@@ -86,6 +86,7 @@ fun main() {
                 onUpdatePorts = vm::updatePorts,
                 onInstallUpdate = { state.availableUpdate?.let(vm::installUpdate) },
                 onDismissUpdate = vm::dismissUpdate,
+                onCheckUpdate = vm::checkUpdate,
             )
         }
     }

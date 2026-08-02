@@ -45,7 +45,16 @@ class AppViewModel(
         if (current.activeKeyId == null) {
             _state.update { it.copy(activeKeyId = it.keys.firstOrNull()?.id) }
         }
-        scope.launch { checkUpdate() }
+        scope.launch {
+            val snap = settings
+            val info = checkForUpdate(snap) ?: return@launch
+            saveSettings(snap.copy(
+                updateCheckedAt = System.currentTimeMillis(),
+                updateTag = info.tag,
+                updateUrl = info.downloadUrl,
+            ))
+            if (isNewer(info.tag)) _state.update { it.copy(availableUpdate = info) }
+        }
     }
 
     fun addKey(uri: String, name: String) {
@@ -152,15 +161,21 @@ class AppViewModel(
         _state.update { it.copy(availableUpdate = null) }
     }
 
-    private suspend fun checkUpdate() {
-        val snap = settings
-        val info = checkForUpdate(snap) ?: return
-        saveSettings(snap.copy(
-            updateCheckedAt = System.currentTimeMillis(),
-            updateTag = info.tag,
-            updateUrl = info.downloadUrl,
-        ))
-        if (isNewer(info.tag)) _state.update { it.copy(availableUpdate = info) }
+    fun checkUpdate() {
+        scope.launch {
+            _state.update { it.copy(checkingUpdate = true) }
+            val snap = settings
+            val info = checkForUpdate(snap.copy(updateCheckedAt = 0))
+            if (info != null) {
+                saveSettings(snap.copy(
+                    updateCheckedAt = System.currentTimeMillis(),
+                    updateTag = info.tag,
+                    updateUrl = info.downloadUrl,
+                ))
+                if (isNewer(info.tag)) _state.update { it.copy(availableUpdate = info) }
+            }
+            _state.update { it.copy(checkingUpdate = false) }
+        }
     }
 
     fun onExit() {

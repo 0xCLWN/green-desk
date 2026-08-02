@@ -12,6 +12,7 @@ data class AppState(
     val downBytes: Long = 0L,
     val availableUpdate: UpdateInfo? = null,
     val updateProgress: Float? = null,
+    val checkingUpdate: Boolean = false,
 )
 
 val AppState.activeKey: VlessKey?

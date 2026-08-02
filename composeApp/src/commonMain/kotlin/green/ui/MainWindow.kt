@@ -38,6 +38,7 @@ fun MainWindow(
     onUpdatePorts: (socksPort: Int, httpPort: Int) -> Unit,
     onInstallUpdate: () -> Unit,
     onDismissUpdate: () -> Unit,
+    onCheckUpdate: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -80,11 +81,13 @@ fun MainWindow(
         SettingsDialog(
             socksPort = state.socksPort,
             httpPort = state.httpPort,
+            checkingUpdate = state.checkingUpdate,
             onDismiss = { showSettingsDialog = false },
             onConfirm = { s, h ->
                 onUpdatePorts(s, h)
                 showSettingsDialog = false
             },
+            onCheckUpdate = onCheckUpdate,
         )
     }
 
