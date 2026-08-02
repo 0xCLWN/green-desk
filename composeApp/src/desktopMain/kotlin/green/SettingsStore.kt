@@ -9,6 +9,9 @@ import kotlin.io.path.writeText
 @Serializable
 data class AppSettings(
     val sysProxyEnabled: Boolean = false,
+    val updateCheckedAt: Long = 0,
+    val updateTag: String = "",
+    val updateUrl: String = "",
 )
 
 class SettingsStore(private val dir: Path) {

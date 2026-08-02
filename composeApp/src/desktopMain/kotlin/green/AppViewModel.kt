@@ -1,6 +1,7 @@
 package green
 
 import green.model.AppState
+import green.model.UpdateInfo
 import green.model.VlessKey
 import green.model.activeKey
 import green.model.isBaked
@@ -32,6 +33,7 @@ class AppViewModel(
         if (current.activeKeyId == null) {
             _state.update { it.copy(activeKeyId = it.keys.firstOrNull()?.id) }
         }
+        scope.launch { checkUpdate() }
     }
 
     fun addKey(uri: String, name: String) {
@@ -101,6 +103,35 @@ class AppViewModel(
         if (_state.value.sysProxyEnabled) setSysProxy(enable = false)
         xray.stop()
         _state.update { it.copy(running = false) }
+    }
+
+    fun installUpdate(info: UpdateInfo) {
+        scope.launch {
+            _state.update { it.copy(updateProgress = 0f) }
+            runCatching {
+                val file = downloadUpdate(info) { progress ->
+                    _state.update { it.copy(updateProgress = progress) }
+                }
+                openFile(file)
+            }
+            _state.update { it.copy(updateProgress = null) }
+        }
+    }
+
+    fun dismissUpdate() {
+        _state.update { it.copy(availableUpdate = null) }
+    }
+
+    private suspend fun checkUpdate() {
+        val current = settings
+        val info = checkForUpdate(current) ?: return
+        val newSettings = current.copy(
+            updateCheckedAt = System.currentTimeMillis(),
+            updateTag = info.tag,
+            updateUrl = info.downloadUrl,
+        )
+        settingsStore.save(newSettings)
+        if (isNewer(info.tag)) _state.update { it.copy(availableUpdate = info) }
     }
 
     fun onExit() {

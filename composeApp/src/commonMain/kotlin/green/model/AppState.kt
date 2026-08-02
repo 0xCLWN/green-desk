@@ -8,6 +8,8 @@ data class AppState(
     val error: String? = null,
     val upBytes: Long = 0L,
     val downBytes: Long = 0L,
+    val availableUpdate: UpdateInfo? = null,
+    val updateProgress: Float? = null,
 )
 
 val AppState.activeKey: VlessKey?

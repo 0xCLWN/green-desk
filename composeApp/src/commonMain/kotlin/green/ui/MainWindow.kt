@@ -34,6 +34,8 @@ fun MainWindow(
     onAddKey: (uri: String, name: String) -> Unit,
     onRemoveKey: (id: String) -> Unit,
     onActivateKey: (id: String) -> Unit,
+    onInstallUpdate: () -> Unit,
+    onDismissUpdate: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
 
@@ -41,6 +43,15 @@ fun MainWindow(
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 StatusBar(state = state, onToggle = onToggleProxy, onToggleSysProxy = onToggleSysProxy)
+                state.availableUpdate?.let { update ->
+                    Spacer(Modifier.height(10.dp))
+                    UpdateBanner(
+                        info = update,
+                        progress = state.updateProgress,
+                        onInstall = onInstallUpdate,
+                        onDismiss = onDismissUpdate,
+                    )
+                }
                 Spacer(Modifier.height(16.dp))
                 KeyListHeader(onAdd = { showAddDialog = true })
                 Spacer(Modifier.height(8.dp))

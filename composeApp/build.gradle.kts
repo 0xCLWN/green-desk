@@ -1,7 +1,20 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
+val appVersion = "1.0.0"
+
 // Usage: ./gradlew :composeApp:run -PbakedKeys="vless://key1#Name1,vless://key2#Name2"
 val bakedKeys: String = findProperty("bakedKeys")?.toString() ?: ""
+
+val generateVersion by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/version")
+    outputs.dir(outputDir)
+    inputs.property("appVersion", appVersion)
+    doLast {
+        val file = outputDir.get().file("green/Version.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText("package green\n\nconst val APP_VERSION = \"$appVersion\"\n")
+    }
+}
 
 val generateBakedKeys by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/bakedKeys")
@@ -28,6 +41,7 @@ kotlin {
     sourceSets {
         val desktopMain by getting {
             resources.srcDir(layout.buildDirectory.dir("generated/bakedKeys"))
+            kotlin.srcDir(layout.buildDirectory.dir("generated/version"))
         }
 
         commonMain.dependencies {
@@ -47,6 +61,7 @@ kotlin {
 }
 
 tasks.named("desktopProcessResources") { dependsOn(generateBakedKeys) }
+tasks.named("compileKotlinDesktop") { dependsOn(generateVersion) }
 
 compose.desktop {
     application {
@@ -55,7 +70,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi)
             packageName = "Green"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
             description = "Green VPN Client"
 
             macOS {

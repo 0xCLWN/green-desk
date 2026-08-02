@@ -80,6 +80,8 @@ fun main() {
                 onAddKey = vm::addKey,
                 onRemoveKey = vm::removeKey,
                 onActivateKey = vm::activateKey,
+                onInstallUpdate = { state.availableUpdate?.let(vm::installUpdate) },
+                onDismissUpdate = vm::dismissUpdate,
             )
         }
     }
