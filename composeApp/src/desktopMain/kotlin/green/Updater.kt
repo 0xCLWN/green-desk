@@ -29,9 +29,9 @@ suspend fun checkForUpdate(settings: AppSettings): UpdateInfo? = withContext(Dis
         val tag = json["tag_name"]?.jsonPrimitive?.content ?: return@runCatching null
         val assets = json["assets"]?.jsonArray ?: return@runCatching null
 
-        val want = platformAssetName()
+        val suffix = platformAssetSuffix()
         val asset = assets.firstOrNull {
-            it.jsonObject["name"]?.jsonPrimitive?.content == want
+            it.jsonObject["name"]?.jsonPrimitive?.content?.endsWith(suffix) == true
         }?.jsonObject
 
         val downloadUrl = asset?.get("browser_download_url")?.jsonPrimitive?.content ?: ""
@@ -50,7 +50,7 @@ fun cachedUpdate(settings: AppSettings): UpdateInfo? {
 
 suspend fun downloadUpdate(info: UpdateInfo, onProgress: (Float) -> Unit): File =
     withContext(Dispatchers.IO) {
-        val dest = File(System.getProperty("java.io.tmpdir"), platformAssetName())
+        val dest = File(System.getProperty("java.io.tmpdir"), "Green${platformAssetSuffix()}")
         val conn = URL(info.downloadUrl).openConnection() as HttpURLConnection
         conn.connectTimeout = 15_000
         conn.readTimeout = 120_000
@@ -77,9 +77,9 @@ fun openFile(file: File) {
     }
 }
 
-private fun platformAssetName(): String = when {
-    isMac -> "Green-arm64.dmg"
-    isWindows -> "Green-windows.msi"
+private fun platformAssetSuffix(): String = when {
+    isMac -> "-arm64.dmg"
+    isWindows -> "-windows.msi"
     else -> ""
 }
 

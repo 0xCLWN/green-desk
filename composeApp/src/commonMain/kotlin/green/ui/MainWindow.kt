@@ -1,6 +1,8 @@
 package green.ui
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -158,17 +160,17 @@ fun MainWindow(
 
 @Composable
 private fun StatusSection(state: AppState, onToggle: () -> Unit) {
-    // Pulse animation for connecting dot
-    val infiniteTransition = rememberInfiniteTransition(label = "dot-pulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "pulse",
-    )
+    val pulseAlpha = remember { Animatable(1f) }
+    LaunchedEffect(state.connecting) {
+        if (state.connecting) {
+            while (true) {
+                pulseAlpha.animateTo(0.3f, tween(900, easing = FastOutSlowInEasing))
+                pulseAlpha.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
+            }
+        } else {
+            pulseAlpha.snapTo(1f)
+        }
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -188,7 +190,7 @@ private fun StatusSection(state: AppState, onToggle: () -> Unit) {
                     .background(
                         when {
                             state.running -> AccentGreen
-                            state.connecting -> AccentGreen.copy(alpha = pulseAlpha)
+                            state.connecting -> AccentGreen.copy(alpha = pulseAlpha.value)
                             else -> DotDisconnected
                         }
                     )
