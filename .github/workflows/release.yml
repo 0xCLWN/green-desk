@@ -36,12 +36,12 @@ jobs:
         run: ./gradlew :composeApp:packageDmg -PbakedKeys="${{ github.event.inputs.baked_keys || secrets.BAKED_KEYS }}"
 
       - name: Rename
-        run: mv composeApp/build/compose/binaries/main/dmg/Green-*.dmg Green-arm64.dmg
+        run: mv composeApp/build/compose/binaries/main/dmg/Green-*.dmg "Green-${{ github.ref_name }}-arm64.dmg"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Green-arm64.dmg
-          path: Green-arm64.dmg
+          name: "Green-${{ github.ref_name }}-arm64.dmg"
+          path: "Green-${{ github.ref_name }}-arm64.dmg"
 
 
   build-windows:
@@ -71,12 +71,12 @@ jobs:
 
       - name: Rename
         shell: bash
-        run: mv composeApp/build/compose/binaries/main/msi/Green-*.msi Green-windows.msi
+        run: mv composeApp/build/compose/binaries/main/msi/Green-*.msi "Green-${{ github.ref_name }}-windows.msi"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Green-windows.msi
-          path: Green-windows.msi
+          name: "Green-${{ github.ref_name }}-windows.msi"
+          path: "Green-${{ github.ref_name }}-windows.msi"
 
   release:
     needs: [build-mac-arm64, build-windows]
