@@ -13,6 +13,7 @@ data class AppState(
     val availableUpdate: UpdateInfo? = null,
     val updateProgress: Float? = null,
     val checkingUpdate: Boolean = false,
+    val connecting: Boolean = false,
 )
 
 val AppState.activeKey: VlessKey?

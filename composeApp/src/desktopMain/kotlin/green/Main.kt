@@ -83,6 +83,8 @@ fun main() {
                 onAddKey = vm::addKey,
                 onRemoveKey = vm::removeKey,
                 onActivateKey = vm::activateKey,
+                onRenameKey = vm::renameKey,
+                onEditKey = vm::editKey,
                 onUpdatePorts = vm::updatePorts,
                 onInstallUpdate = { state.availableUpdate?.let(vm::installUpdate) },
                 onDismissUpdate = vm::dismissUpdate,

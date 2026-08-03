@@ -1,10 +1,20 @@
 package green.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun AddKeyDialog(
@@ -12,47 +22,102 @@ fun AddKeyDialog(
     onConfirm: (uri: String, name: String) -> Unit,
 ) {
     var uri by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    val uriError = uri.isNotEmpty() && !uri.startsWith("vless://")
+    val trimmed = uri.trim()
+    val uriError = trimmed.isNotEmpty() && !trimmed.startsWith("vless://")
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Key") },
+        containerColor = Color(0xFF1C1E27),
+        shape = RoundedCornerShape(16.dp),
+        title = {
+            Column {
+                Text(
+                    "Add key",
+                    color = TextPrimary,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "Paste a vless:// link to import a server.",
+                    color = TextSecondary,
+                    fontSize = 13.sp,
+                )
+            }
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = uri,
-                    onValueChange = { uri = it.trim() },
-                    label = { Text("vless:// link") },
-                    isError = uriError,
-                    supportingText = if (uriError) {
-                        { Text("Must start with vless://") }
-                    } else null,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(88.dp)
+                        .border(
+                            1.dp,
+                            if (uriError) DestructiveRed else BorderInput,
+                            RoundedCornerShape(8.dp),
+                        )
+                        .background(BgInput, RoundedCornerShape(8.dp))
+                        .padding(10.dp),
+                ) {
+                    BasicTextField(
+                        value = uri,
+                        onValueChange = { uri = it },
+                        textStyle = TextStyle(
+                            color = TextPrimary,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily.Monospace,
+                        ),
+                        cursorBrush = SolidColor(AccentGreen),
+                        modifier = Modifier.fillMaxSize(),
+                        decorationBox = { inner ->
+                            if (uri.isEmpty()) {
+                                Text(
+                                    "vless://...",
+                                    color = TextSecondary,
+                                    fontSize = 13.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                )
+                            }
+                            inner()
+                        },
+                    )
+                }
+                if (uriError) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Must start with vless://",
+                        color = DestructiveRed,
+                        fontSize = 12.sp,
+                    )
+                } else {
+                    Spacer(Modifier.height(20.dp))
+                }
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
-                    val resolvedName = name.ifBlank { uri.substringAfterLast("#").ifBlank { "Key" } }
-                    onConfirm(uri, resolvedName)
+                    val t = trimmed
+                    val idx = t.lastIndexOf("#")
+                    val name = if (idx >= 0) t.substring(idx + 1).ifBlank { "New key" } else "New key"
+                    onConfirm(t, name)
                 },
-                enabled = uri.startsWith("vless://"),
-            ) {
-                Text("Add")
-            }
+                enabled = trimmed.startsWith("vless://"),
+                shape = RoundedCornerShape(100.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentGreen,
+                    contentColor = OnAccent,
+                    disabledContainerColor = BorderCard,
+                    disabledContentColor = TextSecondary,
+                ),
+            ) { Text("Add", fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(100.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BorderCard),
+            ) { Text("Cancel") }
         },
     )
 }

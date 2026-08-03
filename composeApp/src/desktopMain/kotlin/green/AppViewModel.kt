@@ -124,14 +124,14 @@ class AppViewModel(
     private suspend fun startProxyLocked() {
         val key = _state.value.activeKey ?: return
         val s = _state.value
-        _state.update { it.copy(error = null) }
+        _state.update { it.copy(error = null, connecting = true) }
         xray.start(key, s.socksPort, s.httpPort).fold(
             onSuccess = {
-                _state.update { it.copy(running = true) }
+                _state.update { it.copy(running = true, connecting = false) }
                 if (_state.value.sysProxyEnabled) setSysProxy(enable = true, socksPort = s.socksPort, httpPort = s.httpPort)
             },
             onFailure = { e ->
-                _state.update { it.copy(error = e.message) }
+                _state.update { it.copy(error = e.message, connecting = false) }
             },
         )
     }
@@ -140,7 +140,7 @@ class AppViewModel(
         val s = _state.value
         if (s.sysProxyEnabled) setSysProxy(enable = false, socksPort = s.socksPort, httpPort = s.httpPort)
         xray.stop()
-        _state.update { it.copy(running = false) }
+        _state.update { it.copy(running = false, connecting = false) }
     }
 
     fun installUpdate(info: UpdateInfo) {
@@ -176,6 +176,21 @@ class AppViewModel(
             }
             _state.update { it.copy(checkingUpdate = false) }
         }
+    }
+
+    fun renameKey(id: String, name: String) {
+        if (name.isBlank()) return
+        _state.update { s ->
+            s.copy(keys = s.keys.map { if (it.id == id) it.copy(name = name) else it })
+        }
+        keyStore.save(_state.value.keys.filter { !it.isBaked })
+    }
+
+    fun editKey(id: String, name: String, uri: String) {
+        _state.update { s ->
+            s.copy(keys = s.keys.map { if (it.id == id) it.copy(name = name, uri = uri) else it })
+        }
+        keyStore.save(_state.value.keys.filter { !it.isBaked })
     }
 
     fun onExit() {

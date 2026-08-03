@@ -1,13 +1,22 @@
 package green.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun SettingsDialog(
@@ -26,57 +35,119 @@ fun SettingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Settings") },
+        containerColor = Color(0xFF1C1E27),
+        shape = RoundedCornerShape(16.dp),
+        title = {
+            Text(
+                "Settings",
+                color = TextPrimary,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
+                PortField(
+                    label = "SOCKS5 PORT",
                     value = socksText,
-                    onValueChange = { socksText = it.filter(Char::isDigit).take(5) },
-                    label = { Text("SOCKS5 Port") },
                     isError = !socksValid,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = { socksText = it.filter(Char::isDigit).take(5) },
                 )
-                OutlinedTextField(
+                PortField(
+                    label = "HTTP PORT",
                     value = httpText,
-                    onValueChange = { httpText = it.filter(Char::isDigit).take(5) },
-                    label = { Text("HTTP Port") },
                     isError = !httpValid,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = { httpText = it.filter(Char::isDigit).take(5) },
                 )
-                HorizontalDivider()
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         "Check for updates",
-                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        modifier = Modifier.weight(1f),
                     )
                     if (checkingUpdate) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = AccentGreen,
+                        )
                     } else {
-                        TextButton(onClick = onCheckUpdate) { Text("Check") }
+                        TextButton(
+                            onClick = onCheckUpdate,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text("Check", color = AccentGreen, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
-                    val s = socksText.toIntOrNull() ?: return@TextButton
-                    val h = httpText.toIntOrNull() ?: return@TextButton
+                    val s = socksText.toIntOrNull() ?: return@Button
+                    val h = httpText.toIntOrNull() ?: return@Button
                     onConfirm(s, h)
                 },
                 enabled = socksValid && httpValid,
-            ) { Text("Save") }
+                shape = RoundedCornerShape(100.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentGreen,
+                    contentColor = OnAccent,
+                    disabledContainerColor = BorderCard,
+                    disabledContentColor = TextSecondary,
+                ),
+            ) { Text("Save", fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(100.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BorderCard),
+            ) { Text("Cancel") }
         },
     )
+}
+
+@Composable
+private fun PortField(
+    label: String,
+    value: String,
+    isError: Boolean,
+    onValueChange: (String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            color = TextSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.6.sp,
+        )
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textStyle = TextStyle(
+                color = TextPrimary,
+                fontSize = 14.sp,
+            ),
+            cursorBrush = SolidColor(AccentGreen),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    1.dp,
+                    if (isError) DestructiveRed else BorderInput,
+                    RoundedCornerShape(8.dp),
+                )
+                .background(BgInput, RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        )
+    }
 }
