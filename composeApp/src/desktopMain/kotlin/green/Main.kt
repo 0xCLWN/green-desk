@@ -14,9 +14,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import java.awt.Window as AwtWindow
 
+private val _windowVisible = mutableStateOf(true)
+private val _focusTrigger = mutableStateOf(0)
+
 fun main() {
     System.setProperty("apple.awt.application.name", "Green")
     System.setProperty("apple.awt.UIElement", "true")
+
+    if (!SingleInstance.tryAcquire {
+        javax.swing.SwingUtilities.invokeLater {
+            _windowVisible.value = true
+            _focusTrigger.value++
+        }
+    }) return
 
     val appDir = appDataDir()
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -29,8 +39,8 @@ fun main() {
 
     application(exitProcessOnExit = true) {
         val state by vm.state.collectAsState()
-        var windowVisible by remember { mutableStateOf(true) }
-        var focusTrigger by remember { mutableStateOf(0) }
+        var windowVisible by _windowVisible
+        var focusTrigger by _focusTrigger
 
         fun openWindow() { windowVisible = true; focusTrigger++ }
 
