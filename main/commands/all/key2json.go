@@ -3,6 +3,9 @@ package all
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 
 	xnet "github.com/0xCLWN/xray-core/common/net"
 	"github.com/0xCLWN/xray-core/extra"
@@ -26,11 +29,22 @@ func init() {
 }
 
 func execKey2Json(cmd *base.Command, args []string) {
-	if len(args) < 1 {
+	// Accept URI either as a positional arg or via stdin (preferred — keeps URI off the process list).
+	var uri string
+	if len(args) >= 1 {
+		uri = args[0]
+	} else {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			base.Fatalf("reading stdin: %v", err)
+		}
+		uri = strings.TrimSpace(string(data))
+	}
+	if uri == "" {
 		base.Fatalf("usage: key2json [--socks-port N] [--http-port N] [--api-port N] <vless://...>")
 	}
 
-	cfg, err := extra.Parse(args[0])
+	cfg, err := extra.Parse(uri)
 	if err != nil {
 		base.Fatalf("%v", err)
 	}
