@@ -9,6 +9,10 @@ echo "Current version: $current"
 printf "New version: "
 read -r new_version
 
+echo "Checking compilation..."
+./gradlew :composeApp:compileKotlinDesktop -q
+echo "Compilation OK"
+
 sed -i '' "s/val appVersion = \"$current\"/val appVersion = \"$new_version\"/" "$GRADLE"
 
 echo "Updated: $current → $new_version"

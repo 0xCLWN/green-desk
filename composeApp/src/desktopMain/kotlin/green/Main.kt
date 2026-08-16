@@ -101,7 +101,7 @@ fun main() {
                 onRenameKey = vm::renameKey,
                 onEditKey = vm::editKey,
                 onUpdatePorts = vm::updatePorts,
-                onInstallUpdate = if (isLinux) null else { { state.availableUpdate?.let(vm::installUpdate) } },
+                onInstallUpdate = if (!isWindows && !isMac) null else { { state.availableUpdate?.let(vm::installUpdate) } },
                 onDismissUpdate = vm::dismissUpdate,
                 onCheckUpdate = vm::checkUpdate,
             )
