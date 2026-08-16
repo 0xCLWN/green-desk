@@ -52,7 +52,7 @@ fun MainWindow(
     onRenameKey: (id: String, name: String) -> Unit,
     onEditKey: (id: String, name: String, uri: String) -> Unit,
     onUpdatePorts: (socksPort: Int, httpPort: Int) -> Unit,
-    onInstallUpdate: () -> Unit,
+    onInstallUpdate: (() -> Unit)?,
     onDismissUpdate: () -> Unit,
     onCheckUpdate: () -> Unit,
 ) {
@@ -123,6 +123,7 @@ fun MainWindow(
                 socksPort = state.socksPort,
                 httpPort = state.httpPort,
                 checkingUpdate = state.checkingUpdate,
+                updateCheckResult = state.updateCheckResult,
                 onDismiss = { showSettingsDialog = false },
                 onConfirm = { s, h ->
                     onUpdatePorts(s, h)

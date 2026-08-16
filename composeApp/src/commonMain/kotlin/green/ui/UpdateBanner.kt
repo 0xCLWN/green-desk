@@ -22,7 +22,7 @@ fun UpdateBanner(
     info: UpdateInfo,
     progress: Float?,
     error: String?,
-    onInstall: () -> Unit,
+    onInstall: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     Column {
@@ -52,26 +52,28 @@ fun UpdateBanner(
                     fontFamily = FontFamily.Monospace,
                 )
             }
-            TextButton(
-                onClick = onInstall,
-                enabled = progress == null,
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-            ) {
-                if (progress != null) {
-                    Text(
-                        text = "${(progress * 100).toInt()}%",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                } else {
-                    Text(
-                        text = "Install",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AccentGreen,
-                    )
+            if (onInstall != null) {
+                TextButton(
+                    onClick = onInstall,
+                    enabled = progress == null,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    if (progress != null) {
+                        Text(
+                            text = "${(progress * 100).toInt()}%",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    } else {
+                        Text(
+                            text = "Install",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentGreen,
+                        )
+                    }
                 }
             }
             IconButton(

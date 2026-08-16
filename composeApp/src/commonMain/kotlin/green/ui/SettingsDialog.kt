@@ -23,6 +23,7 @@ fun SettingsDialog(
     socksPort: Int,
     httpPort: Int,
     checkingUpdate: Boolean,
+    updateCheckResult: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (socksPort: Int, httpPort: Int) -> Unit,
     onCheckUpdate: () -> Unit,
@@ -59,29 +60,40 @@ fun SettingsDialog(
                     isError = !httpValid,
                     onValueChange = { httpText = it.filter(Char::isDigit).take(5) },
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "Check for updates",
-                        color = TextPrimary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (checkingUpdate) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = AccentGreen,
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Check for updates",
+                            color = TextPrimary,
+                            fontSize = 14.sp,
+                            modifier = Modifier.weight(1f),
                         )
-                    } else {
-                        TextButton(
-                            onClick = onCheckUpdate,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                        ) {
-                            Text("Check", color = AccentGreen, fontWeight = FontWeight.SemiBold)
+                        if (checkingUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = AccentGreen,
+                            )
+                        } else {
+                            TextButton(
+                                onClick = onCheckUpdate,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            ) {
+                                Text("Check", color = AccentGreen, fontWeight = FontWeight.SemiBold)
+                            }
                         }
+                    }
+                    if (updateCheckResult != null) {
+                        val isError = updateCheckResult.startsWith("Failed")
+                        Text(
+                            text = updateCheckResult,
+                            color = if (isError) DestructiveRed else AccentGreen,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 2.dp),
+                        )
                     }
                 }
             }

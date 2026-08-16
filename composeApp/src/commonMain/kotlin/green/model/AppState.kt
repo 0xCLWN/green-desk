@@ -12,6 +12,7 @@ data class AppState(
     val updateProgress: Float? = null,
     val updateError: String? = null,
     val checkingUpdate: Boolean = false,
+    val updateCheckResult: String? = null,
     val connecting: Boolean = false,
 )
 

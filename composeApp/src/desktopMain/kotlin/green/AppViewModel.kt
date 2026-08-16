@@ -174,18 +174,26 @@ class AppViewModel(
 
     fun checkUpdate() {
         scope.launch {
-            _state.update { it.copy(checkingUpdate = true) }
+            _state.update { it.copy(checkingUpdate = true, updateCheckResult = null) }
             val snap = settings
-            val info = checkForUpdate(snap.copy(updateCheckedAt = 0))
-            if (info != null) {
-                saveSettings(snap.copy(
-                    updateCheckedAt = System.currentTimeMillis(),
-                    updateTag = info.tag,
-                    updateUrl = info.downloadUrl,
-                ))
-                if (isNewer(info.tag)) _state.update { it.copy(availableUpdate = info) }
+            val info = runCatching { checkForUpdate(snap.copy(updateCheckedAt = 0)) }.getOrNull()
+            val result = when {
+                info == null -> "Failed to check for updates"
+                isNewer(info.tag) -> {
+                    saveSettings(snap.copy(
+                        updateCheckedAt = System.currentTimeMillis(),
+                        updateTag = info.tag,
+                        updateUrl = info.downloadUrl,
+                    ))
+                    _state.update { it.copy(availableUpdate = info) }
+                    null
+                }
+                else -> {
+                    saveSettings(snap.copy(updateCheckedAt = System.currentTimeMillis()))
+                    "Up to date"
+                }
             }
-            _state.update { it.copy(checkingUpdate = false) }
+            _state.update { it.copy(checkingUpdate = false, updateCheckResult = result) }
         }
     }
 

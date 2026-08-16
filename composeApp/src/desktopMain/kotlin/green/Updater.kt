@@ -81,10 +81,18 @@ fun openFile(file: File) {
 private fun platformAssetSuffix(): String = when {
     isMac -> "-arm64.dmg"
     isWindows -> "-windows.msi"
-    else -> "-linux.AppImage"
+    else -> "-linux.tar.gz"
 }
 
-fun isNewer(tag: String): Boolean = compareVersions(tag.trimStart('v'), APP_VERSION) > 0
+fun isNewer(tag: String): Boolean {
+    val a = tag.trimStart('v').split(".").map { it.toIntOrNull() ?: 0 }
+    val b = APP_VERSION.split(".").map { it.toIntOrNull() ?: 0 }
+    for (i in 0..1) {
+        val diff = a.getOrElse(i) { 0 } - b.getOrElse(i) { 0 }
+        if (diff != 0) return diff > 0
+    }
+    return false
+}
 
 private fun compareVersions(a: String, b: String): Int {
     val pa = a.split(".").map { it.toIntOrNull() ?: 0 }
