@@ -76,11 +76,18 @@ jobs:
       - name: Package AppImage
         run: ./gradlew :composeApp:packageAppImage -PbakedKeys="${{ inputs.baked_keys }}"
 
-      - name: Bundle tarball from distributable
-        run: tar -czf "Green-${{ inputs.recipient }}-linux.tar.gz" -C composeApp/build/compose/binaries/main/app Green
+      - name: Locate and rename AppImage
+        run: |
+          find composeApp/build/compose/binaries -name "*.AppImage" -o -name "*.appimage" | head -5
+          src=$(find composeApp/build/compose/binaries -iname "*.appimage" | head -1)
+          echo "Found: $src"
+          mv "$src" "Green-${{ inputs.recipient }}-linux.AppImage"
 
-      - name: Rename AppImage
-        run: mv composeApp/build/compose/binaries/main/appImage/Green-*.AppImage "Green-${{ inputs.recipient }}-linux.AppImage"
+      - name: Bundle tarball from distributable
+        run: |
+          appdir=$(find composeApp/build/compose/binaries/main/app -maxdepth 1 -mindepth 1 -type d | head -1)
+          echo "App dir: $appdir"
+          tar -czf "Green-${{ inputs.recipient }}-linux.tar.gz" -C "$(dirname "$appdir")" "$(basename "$appdir")"
 
       - uses: actions/upload-artifact@v4
         with:
