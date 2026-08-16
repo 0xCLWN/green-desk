@@ -73,27 +73,11 @@ jobs:
       - name: Build xray (linux/amd64)
         run: make xray-linux
 
-      - name: Package AppImage
-        run: ./gradlew :composeApp:packageAppImage -PbakedKeys="${{ inputs.baked_keys }}"
+      - name: Create distributable
+        run: ./gradlew :composeApp:createDistributable -PbakedKeys="${{ inputs.baked_keys }}"
 
-      - name: Locate and rename AppImage
-        run: |
-          find composeApp/build/compose/binaries -name "*.AppImage" -o -name "*.appimage" | head -5
-          src=$(find composeApp/build/compose/binaries -iname "*.appimage" | head -1)
-          echo "Found: $src"
-          mv "$src" "Green-${{ inputs.recipient }}-linux.AppImage"
-
-      - name: Bundle tarball from distributable
-        run: |
-          appdir=$(find composeApp/build/compose/binaries/main/app -maxdepth 1 -mindepth 1 -type d | head -1)
-          echo "App dir: $appdir"
-          tar -czf "Green-${{ inputs.recipient }}-linux.tar.gz" -C "$(dirname "$appdir")" "$(basename "$appdir")"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: "Green-${{ inputs.recipient }}-linux.AppImage"
-          path: "Green-${{ inputs.recipient }}-linux.AppImage"
-          retention-days: 30
+      - name: Bundle tarball
+        run: tar -czf "Green-${{ inputs.recipient }}-linux.tar.gz" -C composeApp/build/compose/binaries/main/app Green
 
       - uses: actions/upload-artifact@v4
         with:

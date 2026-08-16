@@ -78,7 +78,6 @@ compose.desktop {
             targetFormats(*buildList {
                 if (os.isMacOsX) add(TargetFormat.Dmg)
                 if (os.isWindows) add(TargetFormat.Msi)
-                if (os.isLinux) add(TargetFormat.AppImage)
             }.toTypedArray())
             packageName = "Green"
             packageVersion = appVersion
