@@ -1,7 +1,7 @@
 XRAY_DIR ?= xray-core
 RESOURCES := composeApp/src/desktopMain/resources/xray
 
-.PHONY: xray-mac xray-mac-intel xray-windows xray-linux run package clean
+.PHONY: xray-mac xray-mac-intel xray-windows xray-linux xray-update run package clean
 
 # build xray binaries and place them in resources
 xray-mac:
@@ -49,3 +49,20 @@ package-windows-baked: xray-windows
 clean:
 	./gradlew clean
 	rm -f $(RESOURCES)/xray-*
+
+# Pull upstream xray-core changes and rebase our patches on top, then rebuild.
+# After this succeeds:
+#   git -C xray-core push origin main --force-with-lease
+#   git add xray-core && git commit -m "chore: update xray-core"
+xray-update:
+	@git -C $(XRAY_DIR) remote get-url upstream 2>/dev/null || \
+		git -C $(XRAY_DIR) remote add upstream https://github.com/0x1488/Xray-core
+	git -C $(XRAY_DIR) fetch upstream
+	git -C $(XRAY_DIR) rebase upstream/main
+	cd $(XRAY_DIR) && go mod tidy
+	$(MAKE) xray-mac
+	@echo ""
+	@echo "Rebase and rebuild done. Next steps:"
+	@echo "  git -C xray-core push origin main --force-with-lease"
+	@echo "  git add xray-core"
+	@echo "  git commit -m \"chore: update xray-core\""
