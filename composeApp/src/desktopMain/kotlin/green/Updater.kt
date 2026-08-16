@@ -41,7 +41,7 @@ suspend fun checkForUpdate(settings: AppSettings): UpdateInfo? = withContext(Dis
     }.getOrNull()
 }
 
-fun cachedUpdate(settings: AppSettings): UpdateInfo? {
+private fun cachedUpdate(settings: AppSettings): UpdateInfo? {
     val tag = settings.updateTag.ifBlank { return null }
     val url = settings.updateUrl.ifBlank { return null }
     if (!isNewer(tag)) return null
@@ -74,6 +74,7 @@ fun openFile(file: File) {
     when {
         isMac -> ProcessBuilder("open", file.absolutePath).start()
         isWindows -> ProcessBuilder("cmd", "/c", "start", "", file.absolutePath).start()
+        else -> ProcessBuilder("xdg-open", file.absolutePath).start()
     }
 }
 

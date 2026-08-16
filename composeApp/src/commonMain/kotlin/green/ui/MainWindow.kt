@@ -78,6 +78,7 @@ fun MainWindow(
                     UpdateBanner(
                         info = update,
                         progress = state.updateProgress,
+                        error = state.updateError,
                         onInstall = onInstallUpdate,
                         onDismiss = onDismissUpdate,
                     )
@@ -557,15 +558,15 @@ private fun KeyRow(
                 expanded = menuExpanded,
                 onDismissRequest = { menuExpanded = false },
             ) {
-                DropdownMenuItem(
-                    text = { Text("Rename", fontSize = 13.5.sp) },
-                    onClick = { menuExpanded = false; onStartRename() },
-                )
-                DropdownMenuItem(
-                    text = { Text("Edit", fontSize = 13.5.sp) },
-                    onClick = { menuExpanded = false; onEdit() },
-                )
                 if (!key.isBaked) {
+                    DropdownMenuItem(
+                        text = { Text("Rename", fontSize = 13.5.sp) },
+                        onClick = { menuExpanded = false; onStartRename() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Edit", fontSize = 13.5.sp) },
+                        onClick = { menuExpanded = false; onEdit() },
+                    )
                     HorizontalDivider(color = BorderCard)
                     DropdownMenuItem(
                         text = { Text("Delete", color = DestructiveRed, fontSize = 13.5.sp) },

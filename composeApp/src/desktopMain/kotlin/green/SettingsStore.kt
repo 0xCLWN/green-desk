@@ -26,5 +26,6 @@ class SettingsStore(private val dir: Path) {
 
     fun save(settings: AppSettings) {
         file.writeText(json.encodeToString(AppSettings.serializer(), settings))
+        file.restrictToOwner()
     }
 }

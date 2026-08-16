@@ -1,0 +1,129 @@
+name: Private Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      recipient:
+        description: 'Name (used in artifact filename, e.g. "alice")'
+        required: true
+      baked_keys:
+        description: 'Comma-separated vless:// keys to embed'
+        required: true
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'both'
+        type: choice
+        options: [both, mac, windows, linux]
+
+jobs:
+  build-mac:
+    if: ${{ inputs.platform == 'both' || inputs.platform == 'mac' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: xray-core/go.mod
+          cache-dependency-path: xray-core/go.sum
+
+      - name: Build xray (darwin/arm64)
+        run: make xray-mac
+
+      - name: Package DMG
+        run: ./gradlew :composeApp:packageDmg -PbakedKeys="${{ inputs.baked_keys }}"
+
+      - name: Rename
+        run: mv composeApp/build/compose/binaries/main/dmg/Green-*.dmg "Green-${{ inputs.recipient }}-arm64.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Green-${{ inputs.recipient }}-arm64.dmg"
+          path: "Green-${{ inputs.recipient }}-arm64.dmg"
+          retention-days: 30
+
+  build-linux:
+    if: ${{ inputs.platform == 'both' || inputs.platform == 'linux' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: xray-core/go.mod
+          cache-dependency-path: xray-core/go.sum
+
+      - name: Build xray (linux/amd64)
+        run: make xray-linux
+
+      - name: Package AppImage
+        run: ./gradlew :composeApp:packageAppImage -PbakedKeys="${{ inputs.baked_keys }}"
+
+      - name: Bundle tarball from distributable
+        run: tar -czf "Green-${{ inputs.recipient }}-linux.tar.gz" -C composeApp/build/compose/binaries/main/app Green
+
+      - name: Rename AppImage
+        run: mv composeApp/build/compose/binaries/main/appImage/Green-*.AppImage "Green-${{ inputs.recipient }}-linux.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Green-${{ inputs.recipient }}-linux.AppImage"
+          path: "Green-${{ inputs.recipient }}-linux.AppImage"
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Green-${{ inputs.recipient }}-linux.tar.gz"
+          path: "Green-${{ inputs.recipient }}-linux.tar.gz"
+          retention-days: 30
+
+  build-windows:
+    if: ${{ inputs.platform == 'both' || inputs.platform == 'windows' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: xray-core/go.mod
+          cache-dependency-path: xray-core/go.sum
+
+      - name: Build xray (windows/amd64)
+        shell: bash
+        run: make xray-windows
+
+      - name: Package MSI
+        shell: bash
+        run: ./gradlew :composeApp:packageMsi -PbakedKeys="${{ inputs.baked_keys }}"
+
+      - name: Rename
+        shell: bash
+        run: mv composeApp/build/compose/binaries/main/msi/Green-*.msi "Green-${{ inputs.recipient }}-windows.msi"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Green-${{ inputs.recipient }}-windows.msi"
+          path: "Green-${{ inputs.recipient }}-windows.msi"
+          retention-days: 30

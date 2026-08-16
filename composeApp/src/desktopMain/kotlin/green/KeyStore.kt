@@ -17,5 +17,6 @@ class KeyStore(private val dir: Path) {
 
     fun save(keys: List<VlessKey>) {
         file.writeText(json.encodeToString(ListSerializer(VlessKey.serializer()), keys))
+        file.restrictToOwner()
     }
 }

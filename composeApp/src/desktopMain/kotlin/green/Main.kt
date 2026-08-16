@@ -4,7 +4,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
@@ -79,6 +81,7 @@ fun main() {
             onCloseRequest = { windowVisible = false },
             visible = windowVisible,
             title = "Green",
+            icon = appIcon,
             state = rememberWindowState(size = DpSize(420.dp, 540.dp)),
             resizable = false,
         ) {
@@ -118,6 +121,13 @@ private fun bringToFront(window: AwtWindow) {
     window.requestFocus()
     // release after macOS has processed the window ordering
     javax.swing.Timer(150) { window.isAlwaysOnTop = false }.apply { isRepeats = false; start() }
+}
+
+private val appIcon: Painter by lazy {
+    val resource = if (isWindows) "icons/icon.ico" else "icons/icon.icns"
+    val bitmap = Thread.currentThread().contextClassLoader.getResourceAsStream(resource)
+        ?.use { javax.imageio.ImageIO.read(it).toComposeImageBitmap() }
+    if (bitmap != null) BitmapPainter(bitmap) else circlePainter(Color(0xFF22C55E))
 }
 
 private fun circlePainter(color: Color): Painter = object : Painter() {

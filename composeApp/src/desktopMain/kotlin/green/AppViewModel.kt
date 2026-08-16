@@ -61,7 +61,7 @@ class AppViewModel(
         val key = VlessKey(id = UUID.randomUUID().toString(), name = name, uri = uri, addedAt = System.currentTimeMillis())
         _state.update { s -> s.copy(keys = s.keys + key, activeKeyId = s.activeKeyId ?: key.id) }
         // Save outside update lambda — avoids side-effects on CAS retry.
-        keyStore.save(_state.value.keys)
+        keyStore.save(_state.value.keys.filter { !it.isBaked })
     }
 
     fun removeKey(id: String) {
@@ -145,15 +145,20 @@ class AppViewModel(
 
     fun installUpdate(info: UpdateInfo) {
         scope.launch {
-            _state.update { it.copy(updateProgress = 0f) }
-            runCatching {
+            _state.update { it.copy(updateProgress = 0f, updateError = null) }
+            val result = runCatching {
                 val file = downloadUpdate(info) { progress ->
                     _state.update { it.copy(updateProgress = progress) }
                 }
                 proxyMutex.withLock { if (_state.value.running) stopProxyLocked() }
                 openFile(file)
             }
-            _state.update { it.copy(updateProgress = null) }
+            _state.update {
+                it.copy(
+                    updateProgress = null,
+                    updateError = result.exceptionOrNull()?.message,
+                )
+            }
         }
     }
 
@@ -180,6 +185,7 @@ class AppViewModel(
 
     fun renameKey(id: String, name: String) {
         if (name.isBlank()) return
+        if (_state.value.keys.find { it.id == id }?.isBaked == true) return
         _state.update { s ->
             s.copy(keys = s.keys.map { if (it.id == id) it.copy(name = name) else it })
         }
@@ -187,6 +193,7 @@ class AppViewModel(
     }
 
     fun editKey(id: String, name: String, uri: String) {
+        if (_state.value.keys.find { it.id == id }?.isBaked == true) return
         _state.update { s ->
             s.copy(keys = s.keys.map { if (it.id == id) it.copy(name = name, uri = uri) else it })
         }

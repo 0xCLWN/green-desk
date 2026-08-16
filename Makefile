@@ -1,7 +1,7 @@
 XRAY_DIR ?= xray-core
 RESOURCES := composeApp/src/desktopMain/resources/xray
 
-.PHONY: xray-mac xray-mac-intel xray-windows run package clean
+.PHONY: xray-mac xray-mac-intel xray-windows xray-linux run package clean
 
 # build xray binaries and place them in resources
 xray-mac:
@@ -16,7 +16,13 @@ xray-windows:
 	go build -trimpath -ldflags="-s -w" -o $(CURDIR)/$(RESOURCES)/xray-windows-amd64.exe ./main
 	@echo "Built xray-windows-amd64.exe"
 
-xray-all: xray-mac xray-windows
+xray-linux:
+	cd $(XRAY_DIR) && \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+	go build -trimpath -ldflags="-s -w" -o $(CURDIR)/$(RESOURCES)/xray-linux-amd64 ./main
+	@echo "Built xray-linux-amd64"
+
+xray-all: xray-mac xray-windows xray-linux
 
 # run the app in dev mode (needs at least one xray binary built)
 run: xray-mac

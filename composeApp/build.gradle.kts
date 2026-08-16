@@ -68,7 +68,7 @@ compose.desktop {
         mainClass = "green.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.AppImage)
             packageName = "Green"
             packageVersion = appVersion
             description = "Green VPN Client"

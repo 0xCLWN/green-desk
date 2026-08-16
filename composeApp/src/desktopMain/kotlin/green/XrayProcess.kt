@@ -4,7 +4,6 @@ import green.model.VlessKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import java.net.ServerSocket
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.TimeUnit
@@ -19,22 +18,24 @@ class XrayProcess(private val appDir: Path) {
             try {
                 stop()
                 val binary = ensureBinary()
-                val api = freePort()
                 val configFile = appDir.resolve("config.json")
 
-                // redirectErrorStream so we never deadlock on a full stderr pipe.
+                // Pass URI via stdin — keeps it off the process argument list (not visible in ps).
+                // No --api-port: the gRPC API is unused and would expose server config to any local process.
                 val key2json = ProcessBuilder(
                     binary.toString(), "key2json",
                     "--socks-port", "$socksPort",
                     "--http-port", "$httpPort",
-                    "--api-port", "$api",
-                    key.uri,
                 ).directory(appDir.toFile()).redirectErrorStream(true).start()
+                key2json.outputStream.bufferedWriter().use { it.write(key.uri) }
                 val output = key2json.inputStream.bufferedReader().readText()
                 if (key2json.waitFor() != 0) error("key2json failed: $output")
-                configFile.writeText(output)
 
-                val logFile = appDir.resolve("xray.log").toFile()
+                // Write config then restrict; delete once xray has loaded it.
+                configFile.writeText(output)
+                configFile.restrictToOwner()
+
+                val logFile = appDir.resolve("xray.log")
                 val proc = ProcessBuilder(binary.toString(), "run", "--headless", "-c", configFile.toString())
                     .directory(appDir.toFile())
                     .redirectErrorStream(true)
@@ -42,12 +43,12 @@ class XrayProcess(private val appDir: Path) {
                     .start()
                 process = proc
 
-                // Drain output so the pipe never blocks.
+                // Drain output so the pipe never blocks; restrict log file to owner-only.
                 Thread {
-                    logFile.outputStream().use { out -> proc.inputStream.copyTo(out) }
+                    logFile.toFile().outputStream().also { logFile.restrictToOwner() }
+                        .use { out -> proc.inputStream.copyTo(out) }
                 }.apply { isDaemon = true; start() }
 
-                // Suspending delay keeps the coroutine cancellable (unlike Thread.sleep).
                 delay(500)
                 if (!proc.isAlive) {
                     val tail = logFile.takeIf { it.exists() }
@@ -56,13 +57,15 @@ class XrayProcess(private val appDir: Path) {
                     error("xray exited (code ${proc.exitValue()})\n$tail")
                 }
 
+                // xray has loaded the config — delete it so the endpoint doesn't sit on disk.
+                runCatching { configFile.deleteIfExists() }
+
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)
             }
         }
 
-    // @Synchronized so onExit() and an in-flight start() can't race on `process`.
     @Synchronized fun stop() {
         process?.let { p ->
             p.destroy()
@@ -73,6 +76,7 @@ class XrayProcess(private val appDir: Path) {
 
     private fun ensureBinary(): Path {
         val dest = appDir.resolve(xrayBinaryName())
+        if (dest.exists()) return dest
 
         val resourceName = xrayResourceName()
         val stream = Thread.currentThread().contextClassLoader.getResourceAsStream(resourceName)
@@ -88,5 +92,3 @@ class XrayProcess(private val appDir: Path) {
         return dest
     }
 }
-
-private fun freePort(): Int = ServerSocket(0).use { it.localPort }

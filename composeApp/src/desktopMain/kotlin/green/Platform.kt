@@ -1,10 +1,19 @@
 package green
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 
 val isWindows get() = System.getProperty("os.name").startsWith("Windows")
 val isMac get() = System.getProperty("os.name").startsWith("Mac")
 val isArm get() = System.getProperty("os.arch").let { it == "aarch64" || it == "arm64" }
+
+// Silently no-op on Windows (which uses ACLs inherited from %APPDATA% / ~/Library).
+fun Path.restrictToOwner(executable: Boolean = false) {
+    if (isWindows) return
+    val perms = if (executable) "rwx------" else "rw-------"
+    runCatching { Files.setPosixFilePermissions(this, PosixFilePermissions.fromString(perms)) }
+}
 
 fun appDataDir(): Path {
     val base = when {
@@ -13,6 +22,7 @@ fun appDataDir(): Path {
         else -> Path.of(System.getProperty("user.home"), ".config", "green-desktop")
     }
     base.toFile().mkdirs()
+    base.restrictToOwner(executable = true)
     return base
 }
 

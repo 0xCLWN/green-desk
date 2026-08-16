@@ -2,6 +2,7 @@
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
+local.properties
 
 # Compiled xray binaries (built via make)
 composeApp/src/desktopMain/resources/xray/
@@ -17,3 +18,4 @@ composeApp/src/desktopMain/resources/xray/
 *.dmg
 *.msi
 *.deb
+dist/
