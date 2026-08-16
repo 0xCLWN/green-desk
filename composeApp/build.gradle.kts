@@ -1,6 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
-val appVersion = "1.2.0"
+val appVersion = "1.2.1"
 
 // Usage: ./gradlew :composeApp:run -PbakedKeys="vless://key1#Name1,vless://key2#Name2"
 val bakedKeys: String = findProperty("bakedKeys")?.toString() ?: ""
