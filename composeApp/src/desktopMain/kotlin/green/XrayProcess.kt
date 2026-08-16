@@ -76,7 +76,6 @@ class XrayProcess(private val appDir: Path) {
 
     private fun ensureBinary(): Path {
         val dest = appDir.resolve(xrayBinaryName())
-        if (dest.exists()) return dest
 
         val resourceName = xrayResourceName()
         val stream = Thread.currentThread().contextClassLoader.getResourceAsStream(resourceName)
