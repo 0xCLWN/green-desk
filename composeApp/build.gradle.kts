@@ -1,6 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
-val appVersion = "1.3.4"
+val appVersion = "1.4.0"
 
 // Usage: ./gradlew :composeApp:run -PbakedKeys="vless://key1#Name1,vless://key2#Name2"
 val bakedKeys: String = findProperty("bakedKeys")?.toString() ?: ""
@@ -66,6 +66,12 @@ tasks.named("compileKotlinDesktop") { dependsOn(generateVersion) }
 compose.desktop {
     application {
         mainClass = "green.MainKt"
+
+        jvmArgs(
+            "-Xmx256m",                        // cap heap — prevents OOM on low-RAM machines
+            "-Dsun.java2d.nodraw=true",         // disable DirectDraw (avoids D3D init crash in some drivers)
+            "-Dsun.java2d.noddraw=true",        // belt-and-suspenders: also disable DDraw
+        )
 
         nativeDistributions {
             val os = org.gradle.internal.os.OperatingSystem.current()
