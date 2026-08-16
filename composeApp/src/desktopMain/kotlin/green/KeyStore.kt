@@ -5,7 +5,6 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 class KeyStore(private val dir: Path) {
     private val file = dir.resolve("keys.json")
@@ -16,7 +15,6 @@ class KeyStore(private val dir: Path) {
     }.getOrDefault(emptyList())
 
     fun save(keys: List<VlessKey>) {
-        file.writeText(json.encodeToString(ListSerializer(VlessKey.serializer()), keys))
-        file.restrictToOwner()
+        file.writeTextSafely(json.encodeToString(ListSerializer(VlessKey.serializer()), keys))
     }
 }

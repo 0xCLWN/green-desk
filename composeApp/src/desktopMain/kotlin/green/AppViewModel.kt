@@ -23,14 +23,18 @@ class AppViewModel(
     // @Volatile + @Synchronized saveSettings() keeps this consistent across threads.
     @Volatile private var settings = settingsStore.load()
 
-    private val _state = MutableStateFlow(
+    private val _state = MutableStateFlow(run {
+        val keys = mergeKeys(keyStore.load(), loadBakedKeys())
+        val activeKeyId = keys.find { it.id == settings.activeKeyId }?.id
+            ?: keys.firstOrNull()?.id
         AppState(
-            keys = mergeKeys(keyStore.load(), loadBakedKeys()),
+            keys = keys,
+            activeKeyId = activeKeyId,
             sysProxyEnabled = settings.sysProxyEnabled,
             socksPort = settings.socksPort,
             httpPort = settings.httpPort,
         )
-    )
+    })
     val state: StateFlow<AppState> = _state.asStateFlow()
 
     // Serialises all stop/start sequences.
@@ -42,9 +46,6 @@ class AppViewModel(
     init {
         val current = _state.value
         keyStore.save(current.keys.filter { !it.isBaked })
-        if (current.activeKeyId == null) {
-            _state.update { it.copy(activeKeyId = it.keys.firstOrNull()?.id) }
-        }
         scope.launch {
             val snap = settings
             val info = checkForUpdate(snap) ?: return@launch
@@ -61,7 +62,9 @@ class AppViewModel(
         val key = VlessKey(id = UUID.randomUUID().toString(), name = name, uri = uri, addedAt = System.currentTimeMillis())
         _state.update { s -> s.copy(keys = s.keys + key, activeKeyId = s.activeKeyId ?: key.id) }
         // Save outside update lambda — avoids side-effects on CAS retry.
-        keyStore.save(_state.value.keys.filter { !it.isBaked })
+        val s = _state.value
+        keyStore.save(s.keys.filter { !it.isBaked })
+        saveSettings(settings.copy(activeKeyId = s.activeKeyId ?: ""))
     }
 
     fun removeKey(id: String) {
@@ -76,7 +79,9 @@ class AppViewModel(
                     activeKeyId = if (s.activeKeyId == id) s.keys.firstOrNull { it.id != id }?.id else s.activeKeyId,
                 )
             }
-            keyStore.save(_state.value.keys.filter { !it.isBaked })
+            val s = _state.value
+            keyStore.save(s.keys.filter { !it.isBaked })
+            saveSettings(settings.copy(activeKeyId = s.activeKeyId ?: ""))
         }
     }
 
@@ -86,6 +91,7 @@ class AppViewModel(
                 val wasRunning = _state.value.running
                 if (wasRunning) stopProxyLocked()
                 _state.update { it.copy(activeKeyId = id) }
+                saveSettings(settings.copy(activeKeyId = id))
                 if (wasRunning) startProxyLocked()
             }
         }

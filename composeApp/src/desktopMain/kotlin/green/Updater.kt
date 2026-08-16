@@ -81,7 +81,7 @@ fun openFile(file: File) {
 private fun platformAssetSuffix(): String = when {
     isMac -> "-arm64.dmg"
     isWindows -> "-windows.msi"
-    else -> ""
+    else -> "-linux.AppImage"
 }
 
 fun isNewer(tag: String): Boolean = compareVersions(tag.trimStart('v'), APP_VERSION) > 0

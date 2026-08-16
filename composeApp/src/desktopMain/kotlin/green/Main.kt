@@ -20,8 +20,10 @@ private val _windowVisible = mutableStateOf(true)
 private val _focusTrigger = mutableStateOf(0)
 
 fun main() {
-    System.setProperty("apple.awt.application.name", "Green")
-    System.setProperty("apple.awt.UIElement", "true")
+    if (isMac) {
+        System.setProperty("apple.awt.application.name", "Green")
+        System.setProperty("apple.awt.UIElement", "true")
+    }
 
     if (!SingleInstance.tryAcquire {
         javax.swing.SwingUtilities.invokeLater {
@@ -126,7 +128,7 @@ private fun bringToFront(window: AwtWindow) {
 private val appIcon: Painter by lazy {
     val resource = if (isWindows) "icons/icon.ico" else "icons/icon.icns"
     val bitmap = Thread.currentThread().contextClassLoader.getResourceAsStream(resource)
-        ?.use { javax.imageio.ImageIO.read(it).toComposeImageBitmap() }
+        ?.use { javax.imageio.ImageIO.read(it)?.toComposeImageBitmap() }
     if (bitmap != null) BitmapPainter(bitmap) else circlePainter(Color(0xFF22C55E))
 }
 

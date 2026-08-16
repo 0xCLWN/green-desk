@@ -44,6 +44,13 @@ private fun setWindowsProxy(enable: Boolean, httpPort: Int) {
     } else {
         exec("reg", "add", key, "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "0", "/f")
     }
+    // Notify running WinINET apps (Chrome, Edge, etc.) of the change without a restart.
+    exec(
+        "powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command",
+        "Add-Type -MemberDefinition '[DllImport(\"wininet.dll\")] public static extern bool InternetSetOption(IntPtr h, int o, IntPtr b, int l);' -Namespace Win32 -Name WinInet;" +
+        "[Win32.WinInet]::InternetSetOption([IntPtr]::Zero, 39, [IntPtr]::Zero, 0);" +   // INTERNET_OPTION_SETTINGS_CHANGED
+        "[Win32.WinInet]::InternetSetOption([IntPtr]::Zero, 37, [IntPtr]::Zero, 0)"      // INTERNET_OPTION_REFRESH
+    )
 }
 
 private fun exec(vararg cmd: String) {

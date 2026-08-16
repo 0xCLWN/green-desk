@@ -23,6 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
 
       - uses: actions/setup-go@v5
         with:
@@ -55,6 +56,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
 
       - uses: actions/setup-go@v5
         with:
@@ -78,8 +80,48 @@ jobs:
           name: "Green-${{ github.ref_name }}-windows.msi"
           path: "Green-${{ github.ref_name }}-windows.msi"
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: xray-core/go.mod
+          cache-dependency-path: xray-core/go.sum
+
+      - name: Build xray (linux/amd64)
+        run: make xray-linux
+
+      - name: Package AppImage
+        run: ./gradlew :composeApp:packageAppImage -PbakedKeys="${{ github.event.inputs.baked_keys || secrets.BAKED_KEYS }}"
+
+      - name: Bundle tarball from distributable
+        run: tar -czf "Green-${{ github.ref_name }}-linux.tar.gz" -C composeApp/build/compose/binaries/main/app Green
+
+      - name: Rename AppImage
+        run: mv composeApp/build/compose/binaries/main/appImage/Green-*.AppImage "Green-${{ github.ref_name }}-linux.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Green-${{ github.ref_name }}-linux.AppImage"
+          path: "Green-${{ github.ref_name }}-linux.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Green-${{ github.ref_name }}-linux.tar.gz"
+          path: "Green-${{ github.ref_name }}-linux.tar.gz"
+
   release:
-    needs: [build-mac-arm64, build-windows]
+    needs: [build-mac-arm64, build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write

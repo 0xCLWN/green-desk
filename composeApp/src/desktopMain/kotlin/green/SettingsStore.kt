@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 @Serializable
 data class AppSettings(
@@ -14,6 +13,7 @@ data class AppSettings(
     val updateCheckedAt: Long = 0,
     val updateTag: String = "",
     val updateUrl: String = "",
+    val activeKeyId: String = "",
 )
 
 class SettingsStore(private val dir: Path) {
@@ -25,7 +25,6 @@ class SettingsStore(private val dir: Path) {
     }.getOrDefault(AppSettings())
 
     fun save(settings: AppSettings) {
-        file.writeText(json.encodeToString(AppSettings.serializer(), settings))
-        file.restrictToOwner()
+        file.writeTextSafely(json.encodeToString(AppSettings.serializer(), settings))
     }
 }
