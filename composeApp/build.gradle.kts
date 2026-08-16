@@ -68,7 +68,12 @@ compose.desktop {
         mainClass = "green.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.AppImage)
+            val os = org.gradle.internal.os.OperatingSystem.current()
+            targetFormats(*buildList {
+                if (os.isMacOsX) add(TargetFormat.Dmg)
+                if (os.isWindows) add(TargetFormat.Msi)
+                if (os.isLinux) add(TargetFormat.AppImage)
+            }.toTypedArray())
             packageName = "Green"
             packageVersion = appVersion
             description = "Green VPN Client"
