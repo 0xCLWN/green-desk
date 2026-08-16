@@ -8,7 +8,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-const val GITHUB_REPO = "0xCLWN/green-desktop"
+const val GITHUB_REPO = "0xCLWN/green-desk"
 private const val CACHE_TTL_MS = 24 * 60 * 60 * 1000L
 
 suspend fun checkForUpdate(settings: AppSettings): UpdateInfo? = withContext(Dispatchers.IO) {
@@ -87,19 +87,9 @@ private fun platformAssetSuffix(): String = when {
 fun isNewer(tag: String): Boolean {
     val a = tag.trimStart('v').split(".").map { it.toIntOrNull() ?: 0 }
     val b = APP_VERSION.split(".").map { it.toIntOrNull() ?: 0 }
-    for (i in 0..1) {
+    for (i in 0 until maxOf(a.size, b.size)) {
         val diff = a.getOrElse(i) { 0 } - b.getOrElse(i) { 0 }
         if (diff != 0) return diff > 0
     }
     return false
-}
-
-private fun compareVersions(a: String, b: String): Int {
-    val pa = a.split(".").map { it.toIntOrNull() ?: 0 }
-    val pb = b.split(".").map { it.toIntOrNull() ?: 0 }
-    for (i in 0 until maxOf(pa.size, pb.size)) {
-        val diff = (pa.getOrElse(i) { 0 }) - (pb.getOrElse(i) { 0 })
-        if (diff != 0) return diff
-    }
-    return 0
 }
