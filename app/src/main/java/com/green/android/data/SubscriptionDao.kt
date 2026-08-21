@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SubscriptionDao {
-    @Query("SELECT * FROM subscriptions")
+    @Query("SELECT * FROM subscriptions ORDER BY id ASC")
     fun getAllFlow(): Flow<List<Subscription>>
 
-    @Query("SELECT * FROM subscriptions")
+    @Query("SELECT * FROM subscriptions ORDER BY id ASC")
     suspend fun getAll(): List<Subscription>
 
     @Insert

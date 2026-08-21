@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/desktop" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/third_party/hev-socks5-tunnel" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/third_party/hev-socks5-tunnel/src/core" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/third_party/hev-socks5-tunnel/third-part/hev-task-system" vcs="Git" />
