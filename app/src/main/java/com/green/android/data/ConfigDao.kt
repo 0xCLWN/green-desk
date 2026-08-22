@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ConfigDao {
-    @Query("SELECT * FROM configs ORDER BY createdAt DESC")
+    @Query("SELECT * FROM configs ORDER BY sortOrder ASC")
     fun getAll(): Flow<List<Config>>
+
+    @Query("SELECT MAX(sortOrder) FROM configs")
+    suspend fun getMaxSortOrder(): Int?
 
     @Query("SELECT * FROM configs WHERE id = :id LIMIT 1")
     suspend fun getById(id: Int): Config?

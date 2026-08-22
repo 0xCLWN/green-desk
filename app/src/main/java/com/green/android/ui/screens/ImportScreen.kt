@@ -26,7 +26,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,6 +34,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,43 +72,24 @@ fun ImportScreen(
     onToast: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    val strQrComingSoon = stringResource(R.string.toast_qr_coming_soon)
     val strClipboardEmpty = stringResource(R.string.toast_clipboard_empty)
     var expanded by remember { mutableStateOf<String?>(null) } // "manual" | "subscription"
     var manualInput by remember { mutableStateOf("") }
     var subscriptionUrl by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(expanded) {
+        if (expanded != null) scrollState.animateScrollTo(scrollState.maxValue)
+    }
 
     Column(Modifier.fillMaxSize()) {
         PushHeader(stringResource(R.string.screen_add_server), onBack)
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 18.dp, vertical = 16.dp),
         ) {
-            // QR placeholder
-            Box(
-                Modifier
-                    .size(150.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(1.dp, Border, RoundedCornerShape(16.dp))
-                    .background(Surface)
-                    .padding(14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Default.QrCode, null, tint = Dim, modifier = Modifier.size(72.dp))
-            }
-            Spacer(Modifier.height(14.dp))
-            SectionLabel(stringResource(R.string.label_or_add_another_way), modifier = Modifier.align(Alignment.CenterHorizontally))
-            Spacer(Modifier.height(4.dp))
-
-            ImportOption(
-                icon = { Icon(Icons.Default.QrCode, null, tint = Accent, modifier = Modifier.size(22.dp)) },
-                title = stringResource(R.string.import_scan_qr_title), sub = stringResource(R.string.import_scan_qr_sub),
-                onClick = { onToast(strQrComingSoon) },
-            )
-            Spacer(Modifier.height(11.dp))
             ImportOption(
                 icon = { Icon(Icons.Default.ContentPaste, null, tint = Accent, modifier = Modifier.size(20.dp)) },
                 title = stringResource(R.string.import_paste_title), sub = stringResource(R.string.import_paste_sub),
@@ -117,8 +98,7 @@ fun ImportScreen(
                         ?.primaryClip?.getItemAt(0)?.text?.toString().orEmpty()
                     if (clip.isNotBlank()) {
                         manualInput = clip; expanded = "manual"; onClearError()
-                    }
-                    else onToast(strClipboardEmpty)
+                    } else onToast(strClipboardEmpty)
                 },
             )
             Spacer(Modifier.height(11.dp))
@@ -126,8 +106,7 @@ fun ImportScreen(
                 icon = { Icon(Icons.Default.Link, null, tint = Accent, modifier = Modifier.size(20.dp)) },
                 title = stringResource(R.string.import_subscription_title), sub = stringResource(R.string.import_subscription_sub),
                 onClick = {
-                    expanded =
-                        if (expanded == "subscription") null else "subscription"; onClearError()
+                    expanded = if (expanded == "subscription") null else "subscription"; onClearError()
                 },
             )
             Spacer(Modifier.height(11.dp))

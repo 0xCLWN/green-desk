@@ -37,6 +37,8 @@
     <string name="test_testing">проверка маршрута…</string>
     <string name="test_ok">маршрут работает · %1$s мс</string>
     <string name="test_failed">недоступен · повторить</string>
+    <string name="test_failed_proxy">тоннель упал · повторить</string>
+    <string name="test_failed_server">сервер недоступен · повторить</string>
     <string name="test_idle">Проверить соединение</string>
 
     <!-- Disconnect -->
@@ -126,10 +128,13 @@
     <string name="dialog_split_title">Раздельный туннель</string>
     <string name="dialog_split_desc">Отмеченные приложения идут через VPN. По умолчанию — все.</string>
     <string name="search_hint">Поиск</string>
-    <string name="btn_tunnel_suggested">Рекомендуемые</string>
+    <string name="btn_tunnel_suggested">Рекоменд.</string>
+    <string name="section_suggested">Рекомендуемые</string>
+    <string name="banner_suggested_count">%1$d приложений</string>
+    <string name="btn_tunnel_suggested_add">Добавить</string>
     <string name="btn_clear">Очистить</string>
     <string name="btn_cancel">Отмена</string>
-    <string name="btn_save">Сохранить</string>
+    <string name="btn_save">Сохр.</string>
 
     <!-- Geo update banner -->
     <string name="geo_updating_banner">Обновление геобаз…</string>

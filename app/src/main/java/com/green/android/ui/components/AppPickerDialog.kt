@@ -2,9 +2,11 @@ package com.green.android.ui.components
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -49,6 +50,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.graphics.createBitmap
 import com.green.android.R
 import com.green.android.ui.theme.Accent
+import com.green.android.ui.theme.AccentSoft
 import com.green.android.ui.theme.Border2
 import com.green.android.ui.theme.Dim
 import com.green.android.ui.theme.OnAccent
@@ -57,7 +59,7 @@ import com.green.android.ui.theme.TextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class AppInfo(val packageName: String, val label: String)
+data class AppInfo(val packageName: String, val label: String, val isSuggested: Boolean = false)
 
 @Composable
 fun AppPickerDialog(
@@ -72,6 +74,7 @@ fun AppPickerDialog(
     var loading by remember { mutableStateOf(true) }
     var selected by remember(allowedApps) { mutableStateOf(allowedApps) }
     var query by remember { mutableStateOf("") }
+    val installedSuggested = remember(apps) { apps.filter { it.isSuggested } }
     val filtered = remember(apps, query) {
         if (query.isBlank()) apps
         else apps.filter { it.label.contains(query, ignoreCase = true) || it.packageName.contains(query, ignoreCase = true) }
@@ -81,7 +84,7 @@ fun AppPickerDialog(
         apps = withContext(Dispatchers.IO) {
             val installed = pm.getInstalledApplications(PackageManager.GET_META_DATA)
                 .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 || it.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0 }
-                .map { AppInfo(it.packageName, pm.getApplicationLabel(it).toString()) }
+                .map { AppInfo(it.packageName, pm.getApplicationLabel(it).toString(), isSuggested = it.packageName in suggestedApps) }
             val installedPkgs = installed.map { it.packageName }.toSet()
             val uninstalled = suggestedApps
                 .filter { it !in installedPkgs }
@@ -123,6 +126,13 @@ fun AppPickerDialog(
                     CircularProgressIndicator(color = Accent)
                 }
             } else {
+                if (installedSuggested.isNotEmpty() && !installedSuggested.all { it.packageName in selected }) {
+                    SuggestionBanner(
+                        apps = installedSuggested,
+                        pm = pm,
+                        onAddAll = { selected = selected + installedSuggested.map { it.packageName }.toSet() },
+                    )
+                }
                 LazyColumn(
                     Modifier
                         .fillMaxWidth()
@@ -176,10 +186,10 @@ fun AppPickerDialog(
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (suggestedApps.isNotEmpty()) {
-                    TextButton(onClick = { selected = selected + suggestedApps.toSet() }) {
+                if (installedSuggested.isNotEmpty()) {
+                    TextButton(onClick = { selected = selected + installedSuggested.map { it.packageName }.toSet() }) {
                         Text(stringResource(R.string.btn_tunnel_suggested), color = Accent)
                     }
                 }
@@ -195,6 +205,75 @@ fun AppPickerDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = OnAccent),
                 ) { Text(stringResource(R.string.btn_save), fontWeight = FontWeight.Bold) }
             }
+        }
+    }
+}
+
+private val BANNER_CATEGORY_PRIORITY = listOf(
+    // Messenger: Telegram first
+    listOf("org.telegram.messenger", "org.telegram.messenger.web", "org.thunderdog.challegram",
+        "com.whatsapp", "org.thoughtcrime.securesms", "com.discord", "com.facebook.orca"),
+    // Browser: Chrome first
+    listOf("com.android.chrome", "com.brave.browser"),
+    // AI chat: Claude first
+    listOf("com.anthropic.claude", "com.openai.chatgpt", "com.google.android.apps.bard",
+        "ai.perplexity.app.android", "com.microsoft.copilot", "com.microsoft.bing"),
+    // Entertainment / social
+    listOf("com.google.android.youtube", "com.netflix.mediaclient", "com.spotify.music",
+        "tv.twitch.android.app", "com.zhiliaoapp.musically", "com.instagram.android",
+        "com.twitter.android", "com.reddit.frontpage"),
+)
+
+@Composable
+private fun SuggestionBanner(apps: List<AppInfo>, pm: PackageManager, onAddAll: () -> Unit) {
+    val installedPkgs = remember(apps) { apps.map { it.packageName }.toSet() }
+    val preview = remember(installedPkgs) {
+        BANNER_CATEGORY_PRIORITY
+            .mapNotNull { priority -> priority.firstOrNull { it in installedPkgs } }
+            .mapNotNull { pkg -> apps.firstOrNull { it.packageName == pkg } }
+            .ifEmpty { apps.take(4) }
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, Accent.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+            .background(AccentSoft)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            preview.forEach { app ->
+                val icon by produceState<BitmapPainter?>(null, app.packageName) {
+                    value = withContext(Dispatchers.IO) {
+                        runCatching {
+                            val d = pm.getApplicationIcon(app.packageName)
+                            val bmp = createBitmap(d.intrinsicWidth.coerceAtLeast(1), d.intrinsicHeight.coerceAtLeast(1))
+                            android.graphics.Canvas(bmp).also { c -> d.setBounds(0, 0, c.width, c.height); d.draw(c) }
+                            BitmapPainter(bmp.asImageBitmap())
+                        }.getOrNull()
+                    }
+                }
+                if (icon != null)
+                    Image(icon!!, null, Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)))
+                else
+                    Box(Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(Accent.copy(0.12f)))
+            }
+            val overflow = apps.size - preview.size
+            if (overflow > 0)
+                Text("+$overflow", fontSize = 11.sp, color = Accent.copy(0.7f), fontWeight = FontWeight.SemiBold)
+        }
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.section_suggested), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Accent)
+            Text(stringResource(R.string.banner_suggested_count, apps.size), fontSize = 11.sp, color = Accent.copy(0.7f))
+        }
+        TextButton(
+            onClick = onAddAll,
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+        ) {
+            Text(stringResource(R.string.btn_tunnel_suggested_add), color = Accent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         }
     }
 }

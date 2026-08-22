@@ -1,5 +1,6 @@
 package com.green.android.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -55,18 +57,34 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.green.android.R
+import com.green.android.VpnState
 import com.green.android.VpnStatus
 import com.green.android.data.Config
 import com.green.android.nameWithFlag
 import com.green.android.ui.components.SplitTunnelLine
+import com.green.android.ui.theme.Accent
 import com.green.android.ui.theme.Danger
 import com.green.android.ui.theme.Glow
 import com.green.android.ui.theme.GradA
 import com.green.android.ui.theme.GradB
-import com.green.android.ui.theme.Accent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+private class ProxyConnectException : java.io.IOException()
+private class ServerConnectException : java.io.IOException()
+
+private data class DiagResult(
+    val serverHost: String,
+    val serverPort: Int,
+    val serverIp: String?,
+    val sni: String,
+    val sniIp: String?,
+    val sameSubnet: Boolean?,
+    val directMs: Long?,
+)
 
 @Composable
 fun ConnectedLayer(
@@ -109,19 +127,36 @@ fun ConnectedLayer(
     }
 
     var testState by remember { mutableStateOf<String?>(null) }
+    var diagState by remember { mutableStateOf<DiagResult?>(null) }
     val testOk = testState?.startsWith("ok:") == true
-    val testFailed = testState == "failed"
+    val testFailed = testState?.startsWith("failed") == true
+    val testFailedProxy = testState == "failed:proxy"
+    val testFailedServer = testState == "failed:server"
     val testMs = testState?.removePrefix("ok:")?.toLongOrNull()
     val testMsLabel = if (testMs == 0L) "<1" else testMs?.toString()
-    LaunchedEffect(visible) { if (!visible) testState = null }
+    LaunchedEffect(visible) { if (!visible) { testState = null; diagState = null } }
     LaunchedEffect(testState) {
         if (testState != "testing") return@LaunchedEffect
-        testState = withContext(Dispatchers.IO) {
-            runCatching {
+        diagState = null
+        val port = VpnState.socksPort.value
+        val user = VpnState.socksUser.value
+        val pass = VpnState.socksPass.value
+        if (port == 0) { testState = "failed:proxy"; return@LaunchedEffect }
+        val vlessLink = config?.vlessLink
+        coroutineScope {
+            val mainD = async(Dispatchers.IO) {
                 val t0 = System.nanoTime()
-                java.net.Socket().use { it.connect(java.net.InetSocketAddress("1.1.1.1", 443), 5_000) }
-                "ok:${(System.nanoTime() - t0) / 1_000_000L}"
-            }.getOrElse { "failed" }
+                try {
+                    testViaSocks5(port, user, pass)
+                    "ok:${(System.nanoTime() - t0) / 1_000_000L}"
+                } catch (_: ProxyConnectException) { "failed:proxy" }
+                  catch (_: ServerConnectException) { "failed:server" }
+                  catch (_: Exception) { "failed" }
+            }
+            val diagD = if (vlessLink != null) async(Dispatchers.IO) { runDiagnostics(vlessLink) } else null
+            val result = mainD.await()
+            testState = result
+            if (result.startsWith("failed")) diagState = diagD?.await() else diagD?.cancel()
         }
     }
 
@@ -236,6 +271,8 @@ fun ConnectedLayer(
                         when {
                             testState == "testing" -> stringResource(R.string.test_testing)
                             testOk -> stringResource(R.string.test_ok, testMsLabel ?: "0")
+                            testFailedProxy -> stringResource(R.string.test_failed_proxy)
+                            testFailedServer -> stringResource(R.string.test_failed_server)
                             testFailed -> stringResource(R.string.test_failed)
                             else -> stringResource(R.string.test_idle)
                         },
@@ -244,6 +281,30 @@ fun ConnectedLayer(
                 }
             }
             Spacer(Modifier.height(11.dp))
+
+            // Diagnostic panel
+            AnimatedVisibility(visible = testFailed && diagState != null) {
+                val diag = diagState ?: return@AnimatedVisibility
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 11.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, Color.White.copy(0.12f), RoundedCornerShape(16.dp))
+                        .background(Color.Black.copy(0.15f))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(7.dp),
+                ) {
+                    DiagRow("server", "${diag.serverIp ?: "unresolved"} · ${diag.serverPort}")
+                    if (diag.sni.isNotEmpty()) {
+                        DiagRow("sni", diag.sni + (diag.sniIp?.let { " → $it" } ?: " · unresolved"))
+                    }
+                    if (diag.sameSubnet != null) {
+                        DiagRow("subnet", if (diag.sameSubnet) "same /24 ✓" else "different /24")
+                    }
+                    DiagRow("direct", diag.directMs?.let { "${it}ms" } ?: "unreachable")
+                }
+            }
 
             // Disconnect
             Button(
@@ -258,6 +319,57 @@ fun ConnectedLayer(
             }
         }
     }
+}
+
+private fun testViaSocks5(port: Int, user: String, pass: String) {
+    val s = try {
+        java.net.Socket().also { it.soTimeout = 5_000; it.connect(java.net.InetSocketAddress("127.0.0.1", port), 5_000) }
+    } catch (_: Exception) { throw ProxyConnectException() }
+    s.use {
+        val out = s.getOutputStream(); val inp = s.getInputStream()
+        out.write(byteArrayOf(5, 1, 2)); out.flush()
+        inp.read(); inp.read()
+        val ub = user.toByteArray(); val pb = pass.toByteArray()
+        out.write(byteArrayOf(1, ub.size.toByte()) + ub + byteArrayOf(pb.size.toByte()) + pb); out.flush()
+        inp.read(); if (inp.read() != 0) throw ServerConnectException()
+        val host = "1.1.1.1".toByteArray()
+        out.write(byteArrayOf(5, 1, 0, 3, host.size.toByte()) + host + byteArrayOf(0, 80)); out.flush()
+        inp.read(); if (inp.read() != 0) throw ServerConnectException(); repeat(8) { inp.read() }
+        out.write("GET / HTTP/1.0\r\nHost: 1.1.1.1\r\n\r\n".toByteArray()); out.flush()
+        if (inp.read() == -1) throw ServerConnectException()
+    }
+}
+
+private suspend fun runDiagnostics(vlessLink: String): DiagResult = coroutineScope {
+    val uri = java.net.URI(vlessLink)
+    val serverHost = uri.host ?: ""
+    val serverPort = uri.port
+    val sni = uri.rawQuery?.split("&")
+        ?.firstOrNull { it.startsWith("sni=") }
+        ?.removePrefix("sni=")
+        ?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
+
+    val serverIpD = async(Dispatchers.IO) {
+        runCatching { java.net.InetAddress.getByName(serverHost).hostAddress }.getOrNull()
+    }
+    val sniIpD = if (sni.isNotEmpty()) async(Dispatchers.IO) {
+        runCatching { java.net.InetAddress.getByName(sni).hostAddress }.getOrNull()
+    } else null
+    val directMsD = async(Dispatchers.IO) {
+        runCatching {
+            val t0 = System.nanoTime()
+            java.net.Socket().use { it.connect(java.net.InetSocketAddress(serverHost, serverPort), 3_000) }
+            (System.nanoTime() - t0) / 1_000_000L
+        }.getOrNull()
+    }
+
+    val serverIp = serverIpD.await()
+    val sniIp = sniIpD?.await()
+    val directMs = directMsD.await()
+    val sameSubnet = if (serverIp != null && sniIp != null)
+        serverIp.substringBeforeLast(".") == sniIp.substringBeforeLast(".") else null
+
+    DiagResult(serverHost, serverPort, serverIp, sni, sniIp, sameSubnet, directMs)
 }
 
 @Composable
@@ -278,5 +390,14 @@ fun PulsingDot() {
                 .clip(CircleShape)
                 .background(Glow)
         )
+    }
+}
+
+@Composable
+private fun DiagRow(label: String, value: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(label, fontSize = 11.sp, color = Color.White.copy(0.5f), fontFamily = FontFamily.Monospace,
+            modifier = Modifier.width(52.dp))
+        Text(value, fontSize = 11.sp, color = Color.White.copy(0.85f), fontFamily = FontFamily.Monospace)
     }
 }

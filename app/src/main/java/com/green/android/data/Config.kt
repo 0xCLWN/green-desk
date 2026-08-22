@@ -1,5 +1,6 @@
 package com.green.android.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -11,4 +12,5 @@ data class Config(
     val configJson: String? = null,  // set when added via raw JSON; used as-is
     val subscriptionId: Int? = null,
     val createdAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "0") val sortOrder: Int = 0,
 )

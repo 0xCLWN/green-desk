@@ -10,7 +10,6 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import com.green.android.R
 import go.Seq
 import libgreen.Libgreen
 import java.io.File
@@ -91,6 +90,9 @@ class GreenVpnService : VpnService() {
 
             startForeground(NOTIF_ID, buildNotification(getString(R.string.notif_connected)))
             VpnState.status.value = VpnStatus.CONNECTED
+            VpnState.socksPort.value = socksPort
+            VpnState.socksUser.value = socksUser
+            VpnState.socksPass.value = socksPass
         } catch (e: Exception) {
             stopVpn()
         }
@@ -98,6 +100,7 @@ class GreenVpnService : VpnService() {
 
     private fun stopVpn() {
         VpnState.status.value = VpnStatus.DISCONNECTED
+        VpnState.socksPort.value = 0
         runCatching { TProxyService.TProxyStopService() }
         runCatching { Libgreen.stop() }
         runCatching { vpnInterface?.close() }

@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">green</string>
+    <string name="tile_vpn">Green VPN</string>
 
     <!-- App bar -->
     <string name="app_title">smol green vpn</string>
@@ -37,6 +38,8 @@
     <string name="test_testing">testing route…</string>
     <string name="test_ok">route healthy · %1$s ms</string>
     <string name="test_failed">route unreachable · tap to retry</string>
+    <string name="test_failed_proxy">tunnel stopped · tap to retry</string>
+    <string name="test_failed_server">server unreachable · tap to retry</string>
     <string name="test_idle">Test connection</string>
 
     <!-- Disconnect -->
@@ -138,6 +141,9 @@
     <string name="search_hint">Search</string>
     <string name="btn_clear">Clear</string>
     <string name="btn_tunnel_suggested">Suggested</string>
+    <string name="section_suggested">Suggested</string>
+    <string name="banner_suggested_count">%1$d apps</string>
+    <string name="btn_tunnel_suggested_add">Add all</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_save">Save</string>
 

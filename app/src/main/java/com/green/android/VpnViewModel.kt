@@ -43,6 +43,9 @@ data class UpdateInfo(val tag: String, val sizeLabel: String, val url: String, v
 
 object VpnState {
     val status = MutableStateFlow(VpnStatus.DISCONNECTED)
+    val socksPort = MutableStateFlow(0)
+    val socksUser = MutableStateFlow("")
+    val socksPass = MutableStateFlow("")
 }
 
 data class GeoState(
@@ -231,11 +234,18 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                 }
 
                 obj.optJSONArray("vless_keys")?.let { arr ->
+                    var nextOrder = (dao.getMaxSortOrder() ?: -1) + 1
                     for (i in 0 until arr.length()) {
                         val link = arr.getString(i).trim()
                         if (link.startsWith("vless://")) runCatching {
                             Libgreen.validateVlessKey(link)
-                            dao.insert(Config(name = linkName(link), vlessLink = link))
+                            dao.insert(
+                                Config(
+                                    name = linkName(link),
+                                    vlessLink = link,
+                                    sortOrder = nextOrder++
+                                )
+                            )
                         }
                     }
                 }
@@ -474,10 +484,22 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                     val name = trimmed.substringAfterLast("#", "").ifBlank {
                         trimmed.substringAfter("@").substringBefore("?")
                     }
-                    dao.insert(Config(name = name, vlessLink = trimmed))
+                    dao.insert(
+                        Config(
+                            name = name,
+                            vlessLink = trimmed,
+                            sortOrder = nextSortOrder()
+                        )
+                    )
                 } else {
                     val name = nameFromJsonConfig(trimmed)
-                    dao.insert(Config(name = name, configJson = trimmed))
+                    dao.insert(
+                        Config(
+                            name = name,
+                            configJson = trimmed,
+                            sortOrder = nextSortOrder()
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 _addError.value = e.message ?: "Invalid input"
@@ -499,6 +521,7 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                             "No VLESS servers found in subscription"; return@withContext
                     }
                     var added = 0
+                    var nextOrder = (dao.getMaxSortOrder() ?: -1) + 1
                     for (link in links) {
                         runCatching {
                             Libgreen.validateVlessKey(link)
@@ -506,7 +529,8 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                                 Config(
                                     name = linkName(link),
                                     vlessLink = link,
-                                    subscriptionId = subId
+                                    subscriptionId = subId,
+                                    sortOrder = nextOrder++,
                                 )
                             )
                             added++
@@ -543,29 +567,37 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private suspend fun nextSortOrder(): Int = (dao.getMaxSortOrder() ?: -1) + 1
+
     private suspend fun refreshSubscription(sub: com.green.android.data.Subscription) {
         val newLinks = fetchSubscriptionLinks(sub.url)
         val existing = dao.getBySubscriptionId(sub.id)
-        val existingByBase = existing.associateBy { it.vlessLink?.substringBefore("#").orEmpty() }
-        val newByBase = newLinks.associateBy { it.substringBefore("#") }
+        val existingByName = existing.associateBy { it.name }
+        val newNames = newLinks.map { linkName(it) }.toSet()
 
         for (config in existing) {
-            if (config.vlessLink?.substringBefore("#") !in newByBase) dao.delete(config)
+            if (config.name !in newNames) dao.delete(config)
         }
         for (link in newLinks) {
-            val base = link.substringBefore("#")
             val name = linkName(link)
-            val existing = existingByBase[base]
+            val existingConfig = existingByName[name]
             when {
-                existing == null -> dao.insert(
+                existingConfig == null -> dao.insert(
                     Config(
-                        name = name,
-                        vlessLink = link,
-                        subscriptionId = sub.id
+                        name = name, vlessLink = link, subscriptionId = sub.id,
+                        sortOrder = nextSortOrder()
                     )
                 )
 
-                existing.name != name -> dao.update(existing.copy(name = name, vlessLink = link))
+                existingConfig.vlessLink != link -> dao.update(existingConfig.copy(vlessLink = link))
+            }
+        }
+    }
+
+    fun reorderConfigs(configs: List<Config>) {
+        viewModelScope.launch {
+            configs.forEachIndexed { index, config ->
+                dao.update(config.copy(sortOrder = index))
             }
         }
     }

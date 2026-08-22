@@ -1,5 +1,6 @@
 package com.green.android.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -17,19 +18,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.foundation.Canvas
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +68,11 @@ import com.green.android.ui.theme.Border2
 import com.green.android.ui.theme.Dim
 import com.green.android.ui.theme.OnAccent
 import com.green.android.ui.theme.TextPrimary
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
 fun HomeContent(
@@ -85,6 +94,7 @@ fun HomeContent(
     onSkipGeo: () -> Unit,
     onStartUpdate: () -> Unit,
     onDismissUpdate: () -> Unit,
+    onReorder: (List<Config>) -> Unit,
 ) {
     Column(
         Modifier
@@ -184,19 +194,41 @@ fun HomeContent(
         SectionLabel(stringResource(R.string.section_servers))
 
         val subNameMap = remember(subscriptions) { subscriptions.associateBy { it.id } }
+        val localConfigs = remember { mutableStateListOf<Config>() }
+        val lazyListState = rememberLazyListState()
+        val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+            localConfigs.apply { add(to.index, removeAt(from.index)) }
+        }
+        LaunchedEffect(configs) {
+            if (!reorderState.isAnyItemDragging) {
+                localConfigs.clear()
+                localConfigs.addAll(configs)
+            }
+        }
+        LaunchedEffect(reorderState) {
+            snapshotFlow { reorderState.isAnyItemDragging }
+                .distinctUntilChanged()
+                .drop(1)
+                .filter { !it }
+                .collect { onReorder(localConfigs.toList()) }
+        }
         LazyColumn(
-            Modifier.weight(1f),
+            state = lazyListState,
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(9.dp),
             contentPadding = PaddingValues(bottom = 4.dp),
         ) {
-            items(configs, key = { it.id }) { config ->
-                ServerCard(
-                    config = config,
-                    subscriptionName = config.subscriptionId?.let { subNameMap[it]?.name },
-                    selected = config.id == selectedId,
-                    onSelect = { onSelect(config) },
-                    onEdit = { onOpenEdit(config) },
-                )
+            items(localConfigs, key = { it.id }) { config ->
+                ReorderableItem(reorderState, key = config.id) {
+                    ServerCard(
+                        config = config,
+                        subscriptionName = config.subscriptionId?.let { subNameMap[it]?.name },
+                        selected = config.id == selectedId,
+                        onSelect = { onSelect(config) },
+                        onEdit = { onOpenEdit(config) },
+                        dragHandleModifier = Modifier.draggableHandle(),
+                    )
+                }
             }
             item { AddServerCard(onClick = onOpenImport) }
         }

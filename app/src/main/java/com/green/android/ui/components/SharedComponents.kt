@@ -1,7 +1,7 @@
 package com.green.android.ui.components
 
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -49,10 +50,9 @@ import com.green.android.ui.theme.Accent
 import com.green.android.ui.theme.AccentSoft
 import com.green.android.ui.theme.Border
 import com.green.android.ui.theme.Border2
+import com.green.android.ui.theme.Danger
 import com.green.android.ui.theme.Dim
 import com.green.android.ui.theme.Dim2
-import com.green.android.ui.theme.Danger
-import com.green.android.ui.theme.OnAccent
 import com.green.android.ui.theme.Surface
 import com.green.android.ui.theme.Surface3
 import com.green.android.ui.theme.TextPrimary
@@ -210,7 +210,14 @@ fun inputColors() = OutlinedTextFieldDefaults.colors(
 )
 
 @Composable
-fun ServerCard(config: Config, subscriptionName: String?, selected: Boolean, onSelect: () -> Unit, onEdit: () -> Unit) {
+fun ServerCard(
+    config: Config,
+    subscriptionName: String?,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    onEdit: () -> Unit,
+    dragHandleModifier: Modifier? = null
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -254,6 +261,14 @@ fun ServerCard(config: Config, subscriptionName: String?, selected: Boolean, onS
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Default.MoreVert, stringResource(R.string.cd_edit), tint = Dim, modifier = Modifier.size(18.dp))
+        }
+        if (dragHandleModifier != null) {
+            Icon(
+                Icons.Rounded.DragHandle,
+                contentDescription = null,
+                tint = Dim,
+                modifier = dragHandleModifier.size(18.dp),
+            )
         }
     }
 }
