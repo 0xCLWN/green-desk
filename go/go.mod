@@ -87,3 +87,5 @@ require (
 )
 
 tool golang.org/x/mobile/cmd/gobind
+
+replace github.com/wlynxg/anet => ./third_party/wlynxg/anet
