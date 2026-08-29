@@ -91,13 +91,13 @@ func Parse(deeplink string) (*conf.Config, error) {
 	}
 	socksMsg := json.RawMessage(socksRaw)
 
-	destOverride := conf.StringList{"http", "tls"}
+	destOverride := conf.StringList{"fakedns", "http", "tls", "quic"}
 
 	stream.SocketSettings = &conf.SocketConfig{Mark: xui.XrayFWMark}
 	markOnly := &conf.StreamConfig{SocketSettings: &conf.SocketConfig{Mark: xui.XrayFWMark}}
 
 	return &conf.Config{
-		LogConfig:    &conf.LogConfig{LogLevel: "warning"},
+		LogConfig:    &conf.LogConfig{LogLevel: "warning", AccessLog: "none"},
 		DNSConfig:    buildDNSConfig(),
 		RouterConfig: buildRouterConfig(),
 		InboundConfigs: []conf.InboundDetourConfig{
@@ -232,23 +232,27 @@ func buildConfStream(params url.Values) (*conf.StreamConfig, error) {
 func buildDNSConfig() *conf.DNSConfig {
 	return &conf.DNSConfig{
 		Servers: []*conf.NameServerConfig{
-			// remote DNS goes through the proxy — no ISP snooping
+			// FakeDNS catches all A/AAAA queries and returns synthetic 198.18.x.x
+			// addresses — no real DNS query leaves the machine.
+			{Address: address("fakedns")},
+			// Fallback for query types FakeDNS can't answer (SRV, TXT, PTR…),
+			// sent through the proxy so the ISP never sees them.
 			{Address: address("8.8.8.8"), Tag: "proxy"},
-			// system DNS as last-resort fallback (e.g. when proxy is unreachable)
-			{Address: address("localhost")},
 		},
+		QueryStrategy: "UseIPv4",
 	}
 }
 
 func buildRouterConfig() *conf.RouterConfig {
-	// route all private / loopback / link-local ranges directly so LAN and
-	// localhost traffic never touches the proxy
 	type fieldRule struct {
 		Type        string   `json:"type"`
 		OutboundTag string   `json:"outboundTag"`
 		IP          []string `json:"ip"`
 	}
-	rule, _ := json.Marshal(fieldRule{
+
+	// Private / loopback / link-local addresses go direct — LAN traffic never
+	// touches the proxy.
+	privateRule, _ := json.Marshal(fieldRule{
 		Type:        "field",
 		OutboundTag: "direct",
 		IP: []string{
@@ -264,12 +268,12 @@ func buildRouterConfig() *conf.RouterConfig {
 		},
 	})
 
-	// IPIfNonMatch: if a domain rule doesn't match, resolve the domain and
-	// re-check against IP rules — ensures private-IP domains also go direct
-	ds := "IPIfNonMatch"
+	// AsIs: FakeDNS sniffing recovers the domain from the 198.18.x.x mapping,
+	// so no extra resolve is needed for routing decisions.
+	ds := "AsIs"
 	return &conf.RouterConfig{
 		DomainStrategy: &ds,
-		RuleList:       []json.RawMessage{rule},
+		RuleList:       []json.RawMessage{privateRule},
 	}
 }
 
