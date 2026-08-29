@@ -25,8 +25,12 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,8 +45,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -87,6 +93,7 @@ fun VpnApp(viewModel: VpnViewModel) {
     val strDisconnectSplit = stringResource(R.string.toast_disconnect_to_change_split)
     val strServerSaved = stringResource(R.string.toast_server_saved)
     val strServerDeleted = stringResource(R.string.toast_server_deleted)
+    val xrayError by VpnState.xrayError.collectAsState()
     val status by viewModel.status.collectAsState()
     val configs by viewModel.configs.collectAsState()
     val selectedId by viewModel.selectedId.collectAsState()
@@ -285,6 +292,27 @@ fun VpnApp(viewModel: VpnViewModel) {
                 suggestedApps = suggestedApps,
                 onDismiss = { showAppPicker = false },
                 onConfirm = { viewModel.setAllowedApps(it); showAppPicker = false },
+            )
+        }
+
+        val clipboard = LocalClipboardManager.current
+        if (xrayError != null) {
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text("xray-core failed to start") },
+                text = {
+                    Text(
+                        xrayError ?: "",
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { clipboard.setText(AnnotatedString(xrayError ?: "")) }) {
+                        Text("Copy")
+                    }
+                },
             )
         }
 

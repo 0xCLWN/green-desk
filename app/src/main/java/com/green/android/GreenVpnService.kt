@@ -84,7 +84,17 @@ class GreenVpnService : VpnService() {
                 ?: return stopVpn()
 
             Libgreen.setAssetPath(filesDir.absolutePath) // GEO UPDATE — remove with GeoUpdater
-            Libgreen.start(configJson)
+            try {
+                Libgreen.start(configJson)
+            } catch (e: Exception) {
+                VpnState.xrayError.value = buildString {
+                    append(e.javaClass.simpleName)
+                    if (!e.message.isNullOrBlank()) append(": ").append(e.message)
+                    e.cause?.let { append("\n\nCaused by: ").append(it.javaClass.simpleName).append(": ").append(it.message) }
+                }
+                stopVpn()
+                return
+            }
 
             TProxyService.TProxyStartService(writeTunConfig(socksPort, socksUser, socksPass), vpnInterface!!.fd)
 

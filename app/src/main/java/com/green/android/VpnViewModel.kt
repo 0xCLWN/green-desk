@@ -46,6 +46,7 @@ object VpnState {
     val socksPort = MutableStateFlow(0)
     val socksUser = MutableStateFlow("")
     val socksPass = MutableStateFlow("")
+    val xrayError = MutableStateFlow<String?>(null)
 }
 
 data class GeoState(
@@ -123,6 +124,10 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         _disguise.value = v
         prefs.edit { putString(Prefs.DISGUISE, v) }
         applyDisguise(getApplication(), v)
+    }
+
+    init {
+        applyDisguise(getApplication(), _disguise.value)
     }
 
     val subscriptions: StateFlow<List<com.green.android.data.Subscription>> = subDao.getAllFlow()
@@ -455,9 +460,9 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         val aliases = mapOf(
-            "default"    to ComponentName(pkg, "$ns.MainActivityDefault"),
-            "alfa_bank"  to ComponentName(pkg, "$ns.MainActivityAlfaBank"),
-            "calculator" to ComponentName(pkg, "$ns.MainActivityCalculator"),
+            "default"   to ComponentName(pkg, "$ns.MainActivityDefault"),
+            "alfa_bank" to ComponentName(pkg, "$ns.MainActivityAlfaBank"),
+            "weather"   to ComponentName(pkg, "$ns.MainActivityWeather"),
         )
         val target = aliases[disguise] ?: aliases["default"]!!
         for ((_, component) in aliases) {
