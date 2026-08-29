@@ -571,7 +571,7 @@ const file_proxy_freedom_config_proto_rawDesc = "" +
 	"RuleAction\x12\t\n" +
 	"\x05Allow\x10\x00\x12\t\n" +
 	"\x05Block\x10\x01BX\n" +
-	"\x16com.xray.proxy.freedomP\x01Z'github.com/xtls/xray-core/proxy/freedom\xaa\x02\x12Xray.Proxy.Freedomb\x06proto3"
+	"\x16com.xray.proxy.freedomP\x01Z'github.com/0xCLWN/xray-core/proxy/freedom\xaa\x02\x12Xray.Proxy.Freedomb\x06proto3"
 
 var (
 	file_proxy_freedom_config_proto_rawDescOnce sync.Once

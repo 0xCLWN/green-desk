@@ -1,9 +1,10 @@
 package conf
 
 import (
+	"strconv"
+
 	"github.com/0xCLWN/xray-core/app/version"
 	"github.com/0xCLWN/xray-core/core"
-	"strconv"
 )
 
 type VersionConfig struct {

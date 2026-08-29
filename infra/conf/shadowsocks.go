@@ -24,8 +24,6 @@ func cipherFromString(c string) shadowsocks.CipherType {
 		return shadowsocks.CipherType_CHACHA20_POLY1305
 	case "xchacha20-poly1305", "aead_xchacha20_poly1305", "xchacha20-ietf-poly1305":
 		return shadowsocks.CipherType_XCHACHA20_POLY1305
-	case "none", "plain":
-		return shadowsocks.CipherType_NONE
 	default:
 		return shadowsocks.CipherType_UNKNOWN
 	}
@@ -45,12 +43,17 @@ type ShadowsocksServerConfig struct {
 	Password    string                   `json:"password"`
 	Level       byte                     `json:"level"`
 	Email       string                   `json:"email"`
-	Users       []*ShadowsocksUserConfig `json:"clients"`
+	Users       []*ShadowsocksUserConfig `json:"users"`
+	Clients     []*ShadowsocksUserConfig `json:"clients"`
 	NetworkList *NetworkList             `json:"network"`
 }
 
 func (v *ShadowsocksServerConfig) Build() (proto.Message, error) {
 	errors.PrintNonRemovalDeprecatedFeatureWarning("Shadowsocks (with no Forward Secrecy, etc.)", "VLESS Encryption")
+
+	if v.Clients != nil {
+		v.Users = v.Clients
+	}
 
 	if C.Contains(shadowaead_2022.List, v.Cipher) {
 		return buildShadowsocks2022(v)
@@ -174,26 +177,22 @@ func buildShadowsocks2022(v *ShadowsocksServerConfig) (proto.Message, error) {
 }
 
 type ShadowsocksServerTarget struct {
-	Address    *Address `json:"address"`
-	Port       uint16   `json:"port"`
-	Level      byte     `json:"level"`
-	Email      string   `json:"email"`
-	Cipher     string   `json:"method"`
-	Password   string   `json:"password"`
-	UoT        bool     `json:"uot"`
-	UoTVersion int      `json:"uotVersion"`
+	Address  *Address `json:"address"`
+	Port     uint16   `json:"port"`
+	Level    byte     `json:"level"`
+	Email    string   `json:"email"`
+	Cipher   string   `json:"method"`
+	Password string   `json:"password"`
 }
 
 type ShadowsocksClientConfig struct {
-	Address    *Address                   `json:"address"`
-	Port       uint16                     `json:"port"`
-	Level      byte                       `json:"level"`
-	Email      string                     `json:"email"`
-	Cipher     string                     `json:"method"`
-	Password   string                     `json:"password"`
-	UoT        bool                       `json:"uot"`
-	UoTVersion int                        `json:"uotVersion"`
-	Servers    []*ShadowsocksServerTarget `json:"servers"`
+	Address  *Address                   `json:"address"`
+	Port     uint16                     `json:"port"`
+	Level    byte                       `json:"level"`
+	Email    string                     `json:"email"`
+	Cipher   string                     `json:"method"`
+	Password string                     `json:"password"`
+	Servers  []*ShadowsocksServerTarget `json:"servers"`
 }
 
 func (v *ShadowsocksClientConfig) Build() (proto.Message, error) {
@@ -202,14 +201,12 @@ func (v *ShadowsocksClientConfig) Build() (proto.Message, error) {
 	if v.Address != nil {
 		v.Servers = []*ShadowsocksServerTarget{
 			{
-				Address:    v.Address,
-				Port:       v.Port,
-				Level:      v.Level,
-				Email:      v.Email,
-				Cipher:     v.Cipher,
-				Password:   v.Password,
-				UoT:        v.UoT,
-				UoTVersion: v.UoTVersion,
+				Address:  v.Address,
+				Port:     v.Port,
+				Level:    v.Level,
+				Email:    v.Email,
+				Cipher:   v.Cipher,
+				Password: v.Password,
 			},
 		}
 	}
@@ -235,8 +232,6 @@ func (v *ShadowsocksClientConfig) Build() (proto.Message, error) {
 			config.Port = uint32(server.Port)
 			config.Method = server.Cipher
 			config.Key = server.Password
-			config.UdpOverTcp = server.UoT
-			config.UdpOverTcpVersion = uint32(server.UoTVersion)
 			return config, nil
 		}
 	}

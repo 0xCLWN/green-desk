@@ -3,8 +3,8 @@ package commander
 import (
 	"context"
 	"net"
+	"strings"
 	"sync"
-    "strings"
 
 	"github.com/0xCLWN/xray-core/common"
 	"github.com/0xCLWN/xray-core/common/errors"
@@ -69,16 +69,15 @@ func (c *Commander) Start() error {
 	}
 	c.Unlock()
 
-	var listen = func(listener net.Listener) {
+	listen := func(listener net.Listener) {
 		if err := c.server.Serve(listener); err != nil {
 			errors.LogErrorInner(context.Background(), err, "failed to start grpc server")
 		}
 	}
 
-
 	if len(c.listen) > 0 {
 		var addr net.Addr
-		
+
 		if strings.HasPrefix(c.listen, "/") || strings.HasPrefix(c.listen, "@") {
 			addr = &net.UnixAddr{Name: c.listen, Net: "unix"}
 		} else {
@@ -89,7 +88,7 @@ func (c *Commander) Start() error {
 			}
 			addr = tcpAddr
 		}
-        l, err := internet.ListenSystem(context.Background(), addr, nil)
+		l, err := internet.ListenSystem(context.Background(), addr, nil)
 		if err != nil {
 			errors.LogErrorInner(context.Background(), err, "API server failed to listen on ", c.listen)
 			return err

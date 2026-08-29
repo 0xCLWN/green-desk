@@ -272,7 +272,7 @@ const file_proxy_socks_config_proto_rawDesc = "" +
 	"\bAuthType\x12\v\n" +
 	"\aNO_AUTH\x10\x00\x12\f\n" +
 	"\bPASSWORD\x10\x01BR\n" +
-	"\x14com.xray.proxy.socksP\x01Z%github.com/xtls/xray-core/proxy/socks\xaa\x02\x10Xray.Proxy.Socksb\x06proto3"
+	"\x14com.xray.proxy.socksP\x01Z%github.com/0xCLWN/xray-core/proxy/socks\xaa\x02\x10Xray.Proxy.Socksb\x06proto3"
 
 var (
 	file_proxy_socks_config_proto_rawDescOnce sync.Once
