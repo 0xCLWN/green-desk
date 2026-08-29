@@ -95,8 +95,8 @@ func VlessKeyDnsServer(key string) (string, error) {
 				continue
 			}
 			addr := s.Address.String()
-			// skip localhost / loopback — not usable as Android DNS
-			if addr == "localhost" || addr == "127.0.0.1" || addr == "::1" {
+			// skip non-IP addresses (e.g. "fakedns") and loopback — not usable as Android DNS
+			if stdnet.ParseIP(addr) == nil || addr == "127.0.0.1" || addr == "::1" {
 				continue
 			}
 			return addr, nil
