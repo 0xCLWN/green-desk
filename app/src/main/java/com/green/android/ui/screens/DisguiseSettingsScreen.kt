@@ -56,8 +56,8 @@ fun DisguiseSettingsScreen(
 ) {
     val options = listOf(
         DisguiseOption("default",   stringResource(R.string.disguise_option_default), Color(0xFF1F2B25), R.drawable.ic_launcher_foreground),
-        DisguiseOption("alfa_bank", stringResource(R.string.disguise_option_alfa),    Color.Transparent, R.mipmap.ic_launcher_alfa, fullIcon = true),
-        DisguiseOption("weather",   stringResource(R.string.disguise_option_weather), Color.Transparent, R.drawable.ic_launcher_weather_fg, fullIcon = true),
+        // DisguiseOption("alfa_bank", stringResource(R.string.disguise_option_alfa),    Color.Transparent, R.mipmap.ic_launcher_alfa, fullIcon = true),
+        // DisguiseOption("weather",   stringResource(R.string.disguise_option_weather), Color.Transparent, R.drawable.ic_launcher_weather_fg, fullIcon = true),
     )
     Column(Modifier.fillMaxSize()) {
         PushHeader(stringResource(R.string.screen_disguise), onBack)
