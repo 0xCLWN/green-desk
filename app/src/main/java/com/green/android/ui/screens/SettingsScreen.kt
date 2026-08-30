@@ -118,9 +118,9 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             when (disguise) {
-                                "alfa_bank"  -> stringResource(R.string.setting_disguise_alfa)
-                                "calculator" -> stringResource(R.string.setting_disguise_calc)
-                                else         -> stringResource(R.string.setting_disguise_default)
+                                "alfa_bank" -> stringResource(R.string.disguise_option_alfa)
+                                "weather"   -> stringResource(R.string.disguise_option_weather)
+                                else        -> stringResource(R.string.disguise_option_default)
                             },
                             fontSize = 13.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold,
                             color = if (disguise == "default") Dim else Accent,

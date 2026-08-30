@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import com.green.android.data.AppDatabase
-import go.Seq
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -32,7 +31,6 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 val config = AppDatabase.get(context).configDao().getById(selectedId) ?: return@launch
 
-                Seq.setContext(context.applicationContext)
                 Libgreen.setAssetPath(context.filesDir.absolutePath)
 
                 val rawJson = when {

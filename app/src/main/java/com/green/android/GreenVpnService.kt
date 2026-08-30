@@ -10,7 +10,6 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import go.Seq
 import libgreen.Libgreen
 import java.io.File
 
@@ -67,8 +66,6 @@ class GreenVpnService : VpnService() {
 
         startForeground(NOTIF_ID, buildNotification(getString(R.string.status_connecting)))
         try {
-            Seq.setContext(applicationContext)
-
             // Protect xray's outbound sockets so they bypass the TUN and don't loop.
             Libgreen.setProtector { fd -> protect(fd) }
 

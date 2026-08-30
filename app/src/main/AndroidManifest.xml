@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
+            android:name=".GreenApp"
             android:allowBackup="true"
             android:dataExtractionRules="@xml/data_extraction_rules"
             android:fullBackupContent="@xml/backup_rules"
@@ -54,11 +55,11 @@
         </activity-alias>
 
         <activity-alias
-                android:name=".MainActivityCalculator"
+                android:name=".MainActivityWeather"
                 android:targetActivity=".MainActivity"
-                android:label="Calculator"
-                android:icon="@mipmap/ic_launcher_calculator"
-                android:roundIcon="@mipmap/ic_launcher_calculator"
+                android:label="Weather"
+                android:icon="@mipmap/ic_launcher_weather"
+                android:roundIcon="@mipmap/ic_launcher_weather"
                 android:enabled="false"
                 android:exported="true">
             <intent-filter>

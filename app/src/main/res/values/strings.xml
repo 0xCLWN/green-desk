@@ -73,14 +73,11 @@
     <string name="setting_add_server_sub">QR, clipboard or manual entry</string>
     <string name="section_general">General</string>
     <string name="setting_disguise">App disguise</string>
-    <string name="setting_disguise_default">Default</string>
-    <string name="setting_disguise_alfa">Alfa Bank</string>
-    <string name="setting_disguise_calc">Calculator</string>
     <string name="screen_disguise">App disguise</string>
     <string name="disguise_restart_warning">Choosing a different icon or name will restart the app.</string>
     <string name="disguise_option_default">Default</string>
     <string name="disguise_option_alfa">Alfa Bank</string>
-    <string name="disguise_option_calculator">Calculator</string>
+    <string name="disguise_option_weather">Yandex Weather</string>
     <string name="setting_notifications">Connection notifications</string>
     <string name="setting_language">Language</string>
     <string name="setting_app_version">App version</string>

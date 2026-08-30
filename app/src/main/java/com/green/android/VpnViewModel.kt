@@ -126,10 +126,6 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         applyDisguise(getApplication(), v)
     }
 
-    init {
-        applyDisguise(getApplication(), _disguise.value)
-    }
-
     val subscriptions: StateFlow<List<com.green.android.data.Subscription>> = subDao.getAllFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -137,6 +133,7 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
+        applyDisguise(getApplication(), _disguise.value)
         viewModelScope.launch { seedDefaultConfigs() }
         viewModelScope.launch(Dispatchers.IO) { runCatching { refreshAllSubscriptions() } }
         viewModelScope.launch { runCatching { checkForUpdates() } }

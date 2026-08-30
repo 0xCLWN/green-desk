@@ -20,7 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "green.db"
-                ).fallbackToDestructiveMigration(true).build().also { instance = it }
+                ).addMigrations(MIGRATION_2_4, MIGRATION_4_5).build().also { instance = it }
             }
     }
 }

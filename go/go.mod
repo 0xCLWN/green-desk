@@ -2,7 +2,7 @@ module swiss/core
 
 go 1.26.3
 
-require github.com/0xCLWN/xray-core v0.0.0-20260829132305-3c406ffe3e75
+require github.com/0xCLWN/xray-core v0.0.0-20260830071648-834b6e223659
 
 require (
 	github.com/ajg/form v1.5.1 // indirect

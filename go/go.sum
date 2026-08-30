@@ -1,7 +1,7 @@
-github.com/0xCLWN/xray-core v0.0.0-20260606095329-876fa337fd1d h1:uB0Z1K8KQ5JjVh8ifQS8G378oLzu93z3Vd8wgZK0+/c=
-github.com/0xCLWN/xray-core v0.0.0-20260606095329-876fa337fd1d/go.mod h1:nuFHaVOmXgDlPcphcsJKVPkSXU2B5urSRLiD6at/wf8=
-github.com/0xCLWN/xray-core v0.0.0-20260829132305-3c406ffe3e75 h1:NL033MlsLbF3rQT3meVdRXfpIGc8Vd8lOolCogM5eEw=
-github.com/0xCLWN/xray-core v0.0.0-20260829132305-3c406ffe3e75/go.mod h1:mdluvnZzoRp6OEsONfczsiMOYhETnvpuIv6KHVRi5jM=
+github.com/0xCLWN/xray-core v0.0.0-20260829195416-cb6d488d8691 h1:kfR4vEgy6CH8msSbZ87eUeC3npzBVn2SG1yT5Cy6klk=
+github.com/0xCLWN/xray-core v0.0.0-20260829195416-cb6d488d8691/go.mod h1:mdluvnZzoRp6OEsONfczsiMOYhETnvpuIv6KHVRi5jM=
+github.com/0xCLWN/xray-core v0.0.0-20260830071648-834b6e223659 h1:UUGdJxr7C5kAJ+99gMv9LjqMvcG7XoKoqfl8Spbdlck=
+github.com/0xCLWN/xray-core v0.0.0-20260830071648-834b6e223659/go.mod h1:mdluvnZzoRp6OEsONfczsiMOYhETnvpuIv6KHVRi5jM=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
 github.com/akavel/rsrc v0.10.2 h1:Zxm8V5eI1hW4gGaYsJQUhxpjkENuG91ki8B4zCrvEsw=
