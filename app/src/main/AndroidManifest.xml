@@ -40,7 +40,6 @@
             </intent-filter>
         </activity-alias>
 
-        <!--
         <activity-alias
                 android:name=".MainActivityAlfaBank"
                 android:targetActivity=".MainActivity"
@@ -68,7 +67,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
-        -->
 
         <receiver
                 android:name=".BootReceiver"

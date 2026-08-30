@@ -269,11 +269,11 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                     geositeUrl = prefs.getString(Prefs.GEO_GEOSITE_URL, GeoUpdater.DEFAULT_GEOSITE_URL) ?: GeoUpdater.DEFAULT_GEOSITE_URL,
                 ) }
 
-                // obj.optString("disguise").takeIf { it.isNotBlank() }?.let { disguise ->
-                //     prefs.edit { putString(Prefs.DISGUISE, disguise) }
-                //     _disguise.value = disguise
-                //     applyDisguise(getApplication(), disguise)
-                // }
+                obj.optString("disguise").takeIf { it.isNotBlank() }?.let { disguise ->
+                    prefs.edit { putString(Prefs.DISGUISE, disguise) }
+                    _disguise.value = disguise
+                    applyDisguise(getApplication(), disguise)
+                }
 
                 val suggestedPkgs = if (obj.has("suggested_apps")) {
                     val arr = obj.optJSONArray("suggested_apps")
@@ -458,8 +458,8 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
 
         val aliases = mapOf(
             "default"   to ComponentName(pkg, "$ns.MainActivityDefault"),
-            // "alfa_bank" to ComponentName(pkg, "$ns.MainActivityAlfaBank"),
-            // "weather"   to ComponentName(pkg, "$ns.MainActivityWeather"),
+            "alfa_bank" to ComponentName(pkg, "$ns.MainActivityAlfaBank"),
+            "weather"   to ComponentName(pkg, "$ns.MainActivityWeather"),
         )
         val target = aliases[disguise] ?: aliases["default"]!!
         for ((_, component) in aliases) {
