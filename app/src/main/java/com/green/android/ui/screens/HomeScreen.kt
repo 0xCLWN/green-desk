@@ -226,7 +226,7 @@ fun HomeContent(
                         selected = config.id == selectedId,
                         onSelect = { onSelect(config) },
                         onEdit = { onOpenEdit(config) },
-                        dragHandleModifier = Modifier.draggableHandle(),
+                        dragHandleModifier = Modifier.longPressDraggableHandle(),
                     )
                 }
             }

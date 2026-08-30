@@ -22,7 +22,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -225,6 +224,7 @@ fun ServerCard(
             .border(1.dp, if (selected) Accent else Border, RoundedCornerShape(16.dp))
             .background(Surface)
             .then(if (selected) Modifier.background(AccentSoft) else Modifier)
+            .then(dragHandleModifier ?: Modifier)
             .clickable(onClick = onSelect)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -261,14 +261,6 @@ fun ServerCard(
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Default.MoreVert, stringResource(R.string.cd_edit), tint = Dim, modifier = Modifier.size(18.dp))
-        }
-        if (dragHandleModifier != null) {
-            Icon(
-                Icons.Rounded.DragHandle,
-                contentDescription = null,
-                tint = Dim,
-                modifier = dragHandleModifier.size(18.dp),
-            )
         }
     }
 }
