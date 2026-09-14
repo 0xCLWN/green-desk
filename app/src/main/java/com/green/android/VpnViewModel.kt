@@ -152,6 +152,9 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
     private val _addError = MutableStateFlow<String?>(null)
     val addError: StateFlow<String?> = _addError.asStateFlow()
 
+    private val _deepLinkAdded = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val deepLinkAdded: SharedFlow<String> = _deepLinkAdded
+
     private val _subscriptionImporting = MutableStateFlow(false)
     val subscriptionImporting: StateFlow<Boolean> = _subscriptionImporting.asStateFlow()
 
@@ -505,6 +508,24 @@ class VpnViewModel(app: Application) : AndroidViewModel(app) {
                 }
             } catch (e: Exception) {
                 _addError.value = e.message ?: "Invalid input"
+            }
+        }
+    }
+
+    fun handleDeepLink(uri: String) {
+        val trimmed = uri.trim()
+        if (!trimmed.startsWith("vless://")) return
+        viewModelScope.launch {
+            _addError.value = null
+            try {
+                withContext(Dispatchers.Default) { Libgreen.validateVlessKey(trimmed) }
+                val name = trimmed.substringAfterLast("#", "").ifBlank {
+                    trimmed.substringAfter("@").substringBefore("?")
+                }
+                dao.insert(Config(name = name, vlessLink = trimmed, sortOrder = nextSortOrder()))
+                _deepLinkAdded.tryEmit(name)
+            } catch (e: Exception) {
+                _addError.value = e.message ?: "Invalid VLESS link"
             }
         }
     }

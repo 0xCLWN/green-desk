@@ -1,6 +1,7 @@
 package com.green.android
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -28,5 +29,11 @@ class MainActivity : ComponentActivity() {
                 VpnApp(viewModel)
             }
         }
+        intent?.data?.toString()?.let { viewModel.handleDeepLink(it) }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.data?.toString()?.let { viewModel.handleDeepLink(it) }
     }
 }

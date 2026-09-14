@@ -164,6 +164,7 @@
     <string name="toast_disconnect_to_change_settings">Disconnect to change settings</string>
     <string name="toast_disconnect_to_change_split">Disconnect to change split tunneling</string>
     <string name="toast_server_saved">Server saved</string>
+    <string name="toast_server_added">Server added</string>
     <string name="toast_server_deleted">Server deleted</string>
     <string name="toast_qr_coming_soon">QR scan coming soon</string>
     <string name="toast_clipboard_empty">Clipboard is empty</string>

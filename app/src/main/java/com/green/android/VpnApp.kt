@@ -88,6 +88,7 @@ fun VpnApp(viewModel: VpnViewModel) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val strUpToDate = stringResource(R.string.toast_up_to_date)
+    val strServerAdded = stringResource(R.string.toast_server_added)
     val strDisconnectBack = stringResource(R.string.toast_disconnect_to_go_back)
     val strDisconnectSettings = stringResource(R.string.toast_disconnect_to_change_settings)
     val strDisconnectSplit = stringResource(R.string.toast_disconnect_to_change_split)
@@ -155,6 +156,10 @@ fun VpnApp(viewModel: VpnViewModel) {
 
     LaunchedEffect(Unit) {
         viewModel.noUpdateSignal.collect { showToast(strUpToDate) }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.deepLinkAdded.collect { showToast(strServerAdded) }
     }
 
     val layerVisible = status == VpnStatus.CONNECTED || status == VpnStatus.CONNECTING

@@ -145,10 +145,8 @@ fun ConnectedLayer(
         val vlessLink = config?.vlessLink
         coroutineScope {
             val mainD = async(Dispatchers.IO) {
-                val t0 = System.nanoTime()
                 try {
-                    testViaSocks5(port, user, pass)
-                    "ok:${(System.nanoTime() - t0) / 1_000_000L}"
+                    "ok:${testViaSocks5(port, user, pass)}"
                 } catch (_: ProxyConnectException) { "failed:proxy" }
                   catch (_: ServerConnectException) { "failed:server" }
                   catch (_: Exception) { "failed" }
@@ -321,7 +319,7 @@ fun ConnectedLayer(
     }
 }
 
-private fun testViaSocks5(port: Int, user: String, pass: String) {
+private fun testViaSocks5(port: Int, user: String, pass: String): Long {
     val s = try {
         java.net.Socket().also { it.soTimeout = 5_000; it.connect(java.net.InetSocketAddress("127.0.0.1", port), 5_000) }
     } catch (_: Exception) { throw ProxyConnectException() }
@@ -335,13 +333,17 @@ private fun testViaSocks5(port: Int, user: String, pass: String) {
         val host = "1.1.1.1".toByteArray()
         out.write(byteArrayOf(5, 1, 0, 3, host.size.toByte()) + host + byteArrayOf(0, 80)); out.flush()
         inp.read(); if (inp.read() != 0) throw ServerConnectException(); repeat(8) { inp.read() }
+        val t0 = System.nanoTime()
         out.write("GET / HTTP/1.0\r\nHost: 1.1.1.1\r\n\r\n".toByteArray()); out.flush()
         if (inp.read() == -1) throw ServerConnectException()
+        return (System.nanoTime() - t0) / 1_000_000L
     }
 }
 
 private suspend fun runDiagnostics(vlessLink: String): DiagResult = coroutineScope {
-    val uri = java.net.URI(vlessLink)
+    val uri = try { java.net.URI(vlessLink) } catch (_: Exception) {
+        return@coroutineScope DiagResult("", 0, null, "", null, null, null)
+    }
     val serverHost = uri.host ?: ""
     val serverPort = uri.port
     val sni = uri.rawQuery?.split("&")
