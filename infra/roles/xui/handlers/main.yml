@@ -1,6 +1,0 @@
----
-- name: restart xui
-  community.docker.docker_compose_v2:
-    project_src: /opt/xui
-    state: present
-    recreate: always

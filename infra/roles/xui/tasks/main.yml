@@ -1,8 +1,0 @@
----
-- import_tasks: deploy.yml
-- import_tasks: bootstrap.yml
-- import_tasks: sub.yml
-- import_tasks: inbounds.yml
-- import_tasks: topology.yml
-- import_tasks: clients.yml
-- import_tasks: keys.yml
