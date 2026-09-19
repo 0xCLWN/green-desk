@@ -1,0 +1,44 @@
+# ---- IntelliJ / Android Studio ----
+*.iml
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/inspectionProfiles/
+.idea
+
+# ---- Gradle ----
+.gradle
+/build
+
+# ---- Secrets ----
+app/src/main/assets/default_config.json
+default_config.json
+default_keys.txt
+*.jks
+*.p12
+
+# ---- Android SDK ----
+local.properties
+/captures
+
+# ---- NDK / CMake ----
+.externalNativeBuild
+.cxx
+
+# ---- Generated libs (gomobile output) ----
+app/libs/*.jar
+
+# ---- Release artifacts ----
+*-release.apk
+*-release.apk.idsig
+
+# ---- Docker ----
+.env
+dist/
+
+# ---- macOS ----
+.DS_Store
+design_handoff_smol_vpn/

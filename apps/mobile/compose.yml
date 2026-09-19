@@ -1,0 +1,23 @@
+services:
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    volumes:
+      - .:/workspace
+      - ${OUTPUT_DIR:-.}:/output
+      - gradle-cache:/root/.gradle
+      - go-mod-cache:/root/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    environment:
+      # Provide your own keystore, or a temporary one is generated automatically.
+      KEYSTORE_FILE: ${KEYSTORE_FILE:-}
+      KEY_ALIAS: ${KEY_ALIAS:-green}
+      KEY_PASSWORD: ${KEY_PASSWORD:-green123456}
+      STORE_PASSWORD: ${STORE_PASSWORD:-green123456}
+
+volumes:
+  gradle-cache:
+  go-mod-cache:
+  go-build-cache:
