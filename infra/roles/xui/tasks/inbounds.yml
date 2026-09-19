@@ -1,0 +1,83 @@
+---
+- name: Get existing inbounds
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/panel/api/inbounds/list"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ vault_nodes[inventory_hostname].api_token }}"
+    status_code: 200
+    validate_certs: false
+  register: _inbounds
+  tags: [inbounds]
+
+- name: Set existing inbound tags fact
+  set_fact:
+    _existing_tags: "{{ _inbounds.json.obj | map(attribute='tag') | list }}"
+  tags: [inbounds]
+
+- name: Create VLESS+Reality inbound
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/panel/api/inbounds/add"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ vault_nodes[inventory_hostname].api_token }}"
+    body_format: json
+    body:
+      remark: "{{ inventory_hostname }}-vless-reality"
+      enable: true
+      protocol: vless
+      port: "{{ inbound.port }}"
+      listen: "0.0.0.0"
+      tag: "{{ inbound.tag }}"
+      settings: >-
+        {{
+          {
+            "clients": [],
+            "decryption": "none"
+          } | to_json
+        }}
+      streamSettings: >-
+        {{
+          {
+            "network": "tcp",
+            "security": "reality",
+            "realitySettings": {
+              "show": false,
+              "xver": 0,
+              "target": inbound.reality_target,
+              "serverNames": inbound.reality_server_names,
+              "privateKey": vault_nodes[inventory_hostname].reality_private_key,
+              "shortIds": vault_nodes[inventory_hostname].reality_short_ids,
+              "settings": {
+                "publicKey": vault_nodes[inventory_hostname].reality_public_key,
+                "fingerprint": inbound.fingerprint,
+                "spiderX": "/"
+              }
+            }
+          } | to_json
+        }}
+      sniffing: >-
+        {{
+          {
+            "enabled": true,
+            "destOverride": ["http", "tls", "quic", "fakedns"],
+            "metadataOnly": false
+          } | to_json
+        }}
+    status_code: 200
+    validate_certs: false
+  register: _created_inbound
+  when: inbound.tag not in _existing_tags
+  notify: restart xui
+  tags: [inbounds]
+
+- name: Store inbound ID fact
+  set_fact:
+    xui_inbound_id: >-
+      {{
+        (_created_inbound.json.obj.id
+          if inbound.tag not in _existing_tags
+          else (_inbounds.json.obj | selectattr('tag', 'equalto', inbound.tag) | first).id)
+        | int
+      }}
+  tags: [inbounds]

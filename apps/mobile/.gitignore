@@ -30,6 +30,7 @@ local.properties
 
 # ---- Generated libs (gomobile output) ----
 app/libs/*.jar
+app/libs/*.aar
 
 # ---- Release artifacts ----
 *-release.apk

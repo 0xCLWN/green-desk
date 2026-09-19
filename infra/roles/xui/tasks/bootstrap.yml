@@ -1,0 +1,61 @@
+---
+# deploy.yml (install.sh) already handled: binary install, systemd service,
+# admin credentials, and Let's Encrypt IP certificate.
+# This task only registers the API token used for subsequent API calls.
+- name: Check if already bootstrapped
+  stat:
+    path: /etc/xui-bootstrapped
+  register: _bootstrapped
+  tags: [bootstrap]
+
+- name: Login and get session cookie
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/login"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: "{{ vault_xui_admin_username }}"
+      password: "{{ vault_nodes[inventory_hostname].admin_password }}"
+    status_code: 200
+    validate_certs: false
+  register: _login
+  when: not _bootstrapped.stat.exists
+  tags: [bootstrap]
+
+- name: Check if API token already exists
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/panel/api/setting/getApiTokens"
+    method: GET
+    headers:
+      Cookie: "{{ _login.cookies_string }}"
+    status_code: 200
+    validate_certs: false
+  register: _tokens
+  when: not _bootstrapped.stat.exists
+  tags: [bootstrap]
+
+- name: Create xnet-tool API token
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/panel/api/setting/addApiToken"
+    method: POST
+    body_format: json
+    body:
+      name: xnet-tool
+      token: "{{ vault_nodes[inventory_hostname].api_token }}"
+      scope: admin
+    headers:
+      Cookie: "{{ _login.cookies_string }}"
+    status_code: 200
+    validate_certs: false
+  when:
+    - not _bootstrapped.stat.exists
+    - (_tokens.json.obj | selectattr('name', 'equalto', 'xnet-tool') | list | length) == 0
+  tags: [bootstrap]
+
+- name: Mark node as bootstrapped
+  file:
+    path: /etc/xui-bootstrapped
+    state: touch
+    mode: "0600"
+  when: not _bootstrapped.stat.exists
+  tags: [bootstrap]

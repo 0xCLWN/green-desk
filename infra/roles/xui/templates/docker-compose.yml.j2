@@ -1,0 +1,14 @@
+services:
+  xui:
+    image: {{ xui_image }}
+    container_name: {{ xui_container_name }}
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      XUI_LOG_LEVEL: info
+    volumes:
+      - {{ xui_db_path }}:/etc/x-ui
+      - /root/cert:/root/cert

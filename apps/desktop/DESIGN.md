@@ -116,7 +116,8 @@ The user manually runs the installer — the app does not replace itself.
 
 ## xray-core fork
 
-Submodule at `xray-core/`, pointing to `github.com/0x1488/Xray-core`.
+Lives in-repo at `../../protocols/xray-core` (monorepo; formerly a git submodule pointing at
+`github.com/0xCLWN/Xray-core`).
 
 The fork adds:
 - `extra/` package — `Parse(uri string) (*conf.Config, error)` that turns a `vless://` URI

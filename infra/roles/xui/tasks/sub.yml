@@ -1,0 +1,34 @@
+---
+- name: Get current panel settings
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/panel/api/setting/all"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ vault_nodes[inventory_hostname].api_token }}"
+    status_code: 200
+    validate_certs: false
+  register: _settings
+  tags: [sub]
+
+- name: Configure subscription server
+  uri:
+    url: "https://localhost:{{ xui_panel_port }}/panel/api/setting/update"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ vault_nodes[inventory_hostname].api_token }}"
+    body_format: json
+    body:
+      subEnable: true
+      subPort: "{{ xui_sub_port }}"
+      subPath: "{{ xui_sub_path }}"
+      subDomain: ""
+      subCertFile: ""
+      subKeyFile: ""
+    status_code: 200
+    validate_certs: false
+  when: >-
+    not _settings.json.obj.subEnable
+    or _settings.json.obj.subPort != xui_sub_port | string
+    or _settings.json.obj.subPath != xui_sub_path
+  notify: restart xui
+  tags: [sub]

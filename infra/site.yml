@@ -1,0 +1,8 @@
+---
+- name: Configure xui proxy nodes
+  hosts: all
+  gather_facts: true
+  become: true
+
+  roles:
+    - xui

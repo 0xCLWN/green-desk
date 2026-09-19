@@ -1,4 +1,4 @@
-XRAY_DIR ?= xray-core
+XRAY_DIR ?= ../../protocols/xray-core
 RESOURCES := composeApp/src/desktopMain/resources/xray
 
 .PHONY: xray-mac xray-mac-intel xray-windows xray-linux xray-update run package clean
@@ -51,9 +51,7 @@ clean:
 	rm -f $(RESOURCES)/xray-*
 
 # Pull upstream xray-core changes and rebase our patches on top, then rebuild.
-# After this succeeds:
-#   git -C xray-core push origin main --force-with-lease
-#   git add xray-core && git commit -m "chore: update xray-core"
+# xray-core now lives in-repo at protocols/xray-core (monorepo), not as a submodule.
 xray-update:
 	@git -C $(XRAY_DIR) remote get-url upstream 2>/dev/null || \
 		git -C $(XRAY_DIR) remote add upstream https://github.com/0x1488/Xray-core
@@ -62,7 +60,4 @@ xray-update:
 	cd $(XRAY_DIR) && go mod tidy
 	$(MAKE) xray-mac
 	@echo ""
-	@echo "Rebase and rebuild done. Next steps:"
-	@echo "  git -C xray-core push origin main --force-with-lease"
-	@echo "  git add xray-core"
-	@echo "  git commit -m \"chore: update xray-core\""
+	@echo "Rebase and rebuild done. Commit protocols/xray-core along with the rest of the change."
