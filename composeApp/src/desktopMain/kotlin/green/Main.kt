@@ -37,6 +37,7 @@ fun main() {
     val vm = AppViewModel(
         keyStore = KeyStore(appDir),
         settingsStore = SettingsStore(appDir),
+        subscriptionStore = SubscriptionStore(appDir),
         xray = XrayProcess(appDir),
         scope = scope,
     )
@@ -104,6 +105,9 @@ fun main() {
                 onInstallUpdate = if (!isWindows && !isMac) null else { { state.availableUpdate?.let(vm::installUpdate) } },
                 onDismissUpdate = vm::dismissUpdate,
                 onCheckUpdate = vm::checkUpdate,
+                onAddSubscription = vm::addSubscription,
+                onRemoveSubscription = vm::removeSubscription,
+                onRefreshSubscriptions = vm::refreshAllSubscriptions,
             )
         }
     }

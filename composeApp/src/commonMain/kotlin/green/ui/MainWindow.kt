@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import green.model.AppState
+import green.model.Subscription
 import green.model.VlessKey
 import green.model.activeKey
 import green.model.isBaked
@@ -55,10 +57,15 @@ fun MainWindow(
     onInstallUpdate: (() -> Unit)?,
     onDismissUpdate: () -> Unit,
     onCheckUpdate: () -> Unit,
+    onAddSubscription: (url: String) -> Unit,
+    onRemoveSubscription: (id: String) -> Unit,
+    onRefreshSubscriptions: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showSubscriptionsDialog by remember { mutableStateOf(false) }
     var editingKey by remember { mutableStateOf<VlessKey?>(null) }
+    val subscriptionsById = remember(state.subscriptions) { state.subscriptions.associateBy { it.id } }
 
     MaterialTheme(colorScheme = GreenThemeColors) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF1A1A1A)) {
@@ -86,6 +93,7 @@ fun MainWindow(
                 Spacer(Modifier.height(24.dp))
                 KeysHeader(
                     onAdd = { showAddDialog = true },
+                    onSubscriptions = { showSubscriptionsDialog = true },
                     onSettings = { showSettingsDialog = true },
                 )
                 Spacer(Modifier.height(14.dp))
@@ -96,6 +104,7 @@ fun MainWindow(
                         KeyList(
                             keys = state.keys,
                             activeKeyId = state.activeKeyId,
+                            subscriptionsById = subscriptionsById,
                             onActivate = onActivateKey,
                             onRename = onRenameKey,
                             onEdit = { key -> editingKey = key },
@@ -155,6 +164,21 @@ fun MainWindow(
                     onEditKey(key.id, name, uri)
                     editingKey = null
                 },
+            )
+        }
+    }
+
+    if (showSubscriptionsDialog) {
+        MaterialTheme(colorScheme = GreenThemeColors) {
+            SubscriptionsDialog(
+                subscriptions = state.subscriptions,
+                addingSubscription = state.addingSubscription,
+                subscriptionError = state.subscriptionError,
+                refreshingSubscriptionIds = state.refreshingSubscriptionIds,
+                onAdd = onAddSubscription,
+                onRemove = onRemoveSubscription,
+                onRefreshAll = onRefreshSubscriptions,
+                onDismiss = { showSubscriptionsDialog = false },
             )
         }
     }
@@ -298,7 +322,7 @@ private fun ProxyToggle(checked: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun KeysHeader(onAdd: () -> Unit, onSettings: () -> Unit) {
+private fun KeysHeader(onAdd: () -> Unit, onSubscriptions: () -> Unit, onSettings: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -315,6 +339,14 @@ private fun KeysHeader(onAdd: () -> Unit, onSettings: () -> Unit) {
             Icon(
                 Icons.Default.Settings,
                 contentDescription = "Settings",
+                tint = TextSecondary,
+                modifier = Modifier.size(15.dp),
+            )
+        }
+        IconButton(onClick = onSubscriptions, modifier = Modifier.size(30.dp)) {
+            Icon(
+                Icons.Default.Sync,
+                contentDescription = "Subscriptions",
                 tint = TextSecondary,
                 modifier = Modifier.size(15.dp),
             )
@@ -391,6 +423,7 @@ private fun EmptyState(onAdd: () -> Unit) {
 private fun KeyList(
     keys: List<VlessKey>,
     activeKeyId: String?,
+    subscriptionsById: Map<String, Subscription>,
     onActivate: (String) -> Unit,
     onRename: (String, String) -> Unit,
     onEdit: (VlessKey) -> Unit,
@@ -410,6 +443,7 @@ private fun KeyList(
                 KeyRow(
                     key = key,
                     isActive = key.id == activeKeyId,
+                    subscriptionName = key.subscriptionId?.let { subscriptionsById[it]?.name },
                     isRenaming = key.id == renamingId,
                     renameValue = renameValue,
                     onRenameValueChange = { renameValue = it },
@@ -447,6 +481,7 @@ private fun KeyList(
 private fun KeyRow(
     key: VlessKey,
     isActive: Boolean,
+    subscriptionName: String?,
     isRenaming: Boolean,
     renameValue: String,
     onRenameValueChange: (String) -> Unit,
@@ -540,6 +575,15 @@ private fun KeyRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (subscriptionName != null) {
+                    Text(
+                        text = "via $subscriptionName",
+                        color = TextMuted,
+                        fontSize = 10.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
 
@@ -559,7 +603,9 @@ private fun KeyRow(
                 expanded = menuExpanded,
                 onDismissRequest = { menuExpanded = false },
             ) {
-                if (!key.isBaked) {
+                // Subscription-owned keys are matched by name on the next refresh — a manual
+                // rename/edit here would either orphan the key or get silently overwritten.
+                if (!key.isBaked && key.subscriptionId == null) {
                     DropdownMenuItem(
                         text = { Text("Rename", fontSize = 13.5.sp) },
                         onClick = { menuExpanded = false; onStartRename() },
@@ -569,6 +615,11 @@ private fun KeyRow(
                         onClick = { menuExpanded = false; onEdit() },
                     )
                     HorizontalDivider(color = BorderCard)
+                    DropdownMenuItem(
+                        text = { Text("Delete", color = DestructiveRed, fontSize = 13.5.sp) },
+                        onClick = { menuExpanded = false; onRemove() },
+                    )
+                } else if (key.subscriptionId != null) {
                     DropdownMenuItem(
                         text = { Text("Delete", color = DestructiveRed, fontSize = 13.5.sp) },
                         onClick = { menuExpanded = false; onRemove() },

@@ -14,6 +14,10 @@ data class AppState(
     val checkingUpdate: Boolean = false,
     val updateCheckResult: String? = null,
     val connecting: Boolean = false,
+    val subscriptions: List<Subscription> = emptyList(),
+    val addingSubscription: Boolean = false,
+    val subscriptionError: String? = null,
+    val refreshingSubscriptionIds: Set<String> = emptySet(),
 )
 
 val AppState.activeKey: VlessKey?

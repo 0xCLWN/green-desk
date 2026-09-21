@@ -1,6 +1,7 @@
 package green
 
 import green.model.AppState
+import green.model.Subscription
 import green.model.UpdateInfo
 import green.model.VlessKey
 import green.model.activeKey
@@ -12,11 +13,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.net.URI
 import java.util.UUID
 
 class AppViewModel(
     private val keyStore: KeyStore,
     private val settingsStore: SettingsStore,
+    private val subscriptionStore: SubscriptionStore,
     private val xray: XrayProcess,
     private val scope: CoroutineScope,
 ) {
@@ -33,6 +36,7 @@ class AppViewModel(
             sysProxyEnabled = settings.sysProxyEnabled,
             socksPort = settings.socksPort,
             httpPort = settings.httpPort,
+            subscriptions = subscriptionStore.load(),
         )
     })
     val state: StateFlow<AppState> = _state.asStateFlow()
@@ -56,6 +60,7 @@ class AppViewModel(
             ))
             if (isNewer(info.tag)) _state.update { it.copy(availableUpdate = info) }
         }
+        if (_state.value.subscriptions.isNotEmpty()) refreshAllSubscriptions()
     }
 
     fun addKey(uri: String, name: String) {
@@ -212,6 +217,151 @@ class AppViewModel(
             s.copy(keys = s.keys.map { if (it.id == id) it.copy(name = name, uri = uri) else it })
         }
         keyStore.save(_state.value.keys.filter { !it.isBaked })
+    }
+
+    fun addSubscription(url: String) {
+        val trimmedUrl = url.trim()
+        if (trimmedUrl.isEmpty()) return
+        if (_state.value.subscriptions.any { it.url == trimmedUrl }) {
+            _state.update { it.copy(subscriptionError = "Subscription already added") }
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(addingSubscription = true, subscriptionError = null) }
+            val name = runCatching { URI(trimmedUrl).host }.getOrNull() ?: trimmedUrl.take(30)
+            val result = runCatching { fetchSubscriptionLinks(trimmedUrl) }
+            val links = result.getOrNull()?.filter { isPlausibleVlessLink(it) }.orEmpty()
+            if (result.isFailure || links.isEmpty()) {
+                _state.update {
+                    it.copy(
+                        addingSubscription = false,
+                        subscriptionError = result.exceptionOrNull()?.message
+                            ?: "No servers found in this subscription",
+                    )
+                }
+                return@launch
+            }
+            val subscription = Subscription(
+                id = UUID.randomUUID().toString(),
+                url = trimmedUrl,
+                name = name,
+                lastUpdated = System.currentTimeMillis(),
+            )
+            val newKeys = links.map { link ->
+                VlessKey(
+                    id = UUID.randomUUID().toString(),
+                    name = subscriptionLinkName(link),
+                    uri = link,
+                    addedAt = System.currentTimeMillis(),
+                    subscriptionId = subscription.id,
+                )
+            }
+            _state.update { s ->
+                s.copy(
+                    subscriptions = s.subscriptions + subscription,
+                    keys = s.keys + newKeys,
+                    activeKeyId = s.activeKeyId ?: newKeys.firstOrNull()?.id,
+                    addingSubscription = false,
+                )
+            }
+            // Save outside update lambda — avoids side-effects on CAS retry.
+            val s = _state.value
+            subscriptionStore.save(s.subscriptions)
+            keyStore.save(s.keys.filter { !it.isBaked })
+            saveSettings(settings.copy(activeKeyId = s.activeKeyId ?: ""))
+        }
+    }
+
+    fun removeSubscription(id: String) {
+        scope.launch {
+            val activeOwnedBySub = _state.value.keys.find { it.id == _state.value.activeKeyId }?.subscriptionId == id
+            if (activeOwnedBySub && _state.value.running) {
+                proxyMutex.withLock { stopProxyLocked() }
+            }
+            _state.update { s ->
+                val remainingKeys = s.keys.filter { it.subscriptionId != id }
+                val activeVanished = s.keys.find { it.id == s.activeKeyId }?.subscriptionId == id
+                s.copy(
+                    subscriptions = s.subscriptions.filter { it.id != id },
+                    keys = remainingKeys,
+                    activeKeyId = if (activeVanished) remainingKeys.firstOrNull()?.id else s.activeKeyId,
+                )
+            }
+            val s = _state.value
+            subscriptionStore.save(s.subscriptions)
+            keyStore.save(s.keys.filter { !it.isBaked })
+            saveSettings(settings.copy(activeKeyId = s.activeKeyId ?: ""))
+        }
+    }
+
+    // Diffs the subscription's current link list against its previously-imported keys:
+    // drops vanished names, updates changed links in place, appends new names.
+    private suspend fun refreshSubscription(sub: Subscription) {
+        val result = runCatching { fetchSubscriptionLinks(sub.url) }
+        val links = result.getOrNull()?.filter { isPlausibleVlessLink(it) }
+        if (result.isFailure || links == null) {
+            _state.update { s ->
+                s.copy(
+                    subscriptions = s.subscriptions.map {
+                        if (it.id == sub.id) it.copy(lastError = result.exceptionOrNull()?.message ?: "Refresh failed") else it
+                    },
+                    refreshingSubscriptionIds = s.refreshingSubscriptionIds - sub.id,
+                )
+            }
+            subscriptionStore.save(_state.value.subscriptions)
+            return
+        }
+
+        val byName = links.associateBy { subscriptionLinkName(it) }
+        val existing = _state.value.keys.filter { it.subscriptionId == sub.id }
+        val vanishedIds = existing.filter { it.name !in byName.keys }.map { it.id }.toSet()
+        val existingNames = existing.map { it.name }.toSet()
+
+        if (_state.value.activeKeyId in vanishedIds && _state.value.running) {
+            proxyMutex.withLock { stopProxyLocked() }
+        }
+
+        _state.update { s ->
+            val updatedKeys = s.keys.mapNotNull { key ->
+                if (key.id in vanishedIds) return@mapNotNull null
+                if (key.subscriptionId == sub.id) {
+                    val link = byName[key.name] ?: return@mapNotNull key
+                    if (link != key.uri) key.copy(uri = link) else key
+                } else key
+            }
+            val addedKeys = byName.filterKeys { it !in existingNames }.map { (name, link) ->
+                VlessKey(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    uri = link,
+                    addedAt = System.currentTimeMillis(),
+                    subscriptionId = sub.id,
+                )
+            }
+            val allKeys = updatedKeys + addedKeys
+            s.copy(
+                keys = allKeys,
+                activeKeyId = if (s.activeKeyId in vanishedIds) allKeys.firstOrNull()?.id else s.activeKeyId,
+                subscriptions = s.subscriptions.map {
+                    if (it.id == sub.id) it.copy(lastUpdated = System.currentTimeMillis(), lastError = null) else it
+                },
+                refreshingSubscriptionIds = s.refreshingSubscriptionIds - sub.id,
+            )
+        }
+        val s = _state.value
+        keyStore.save(s.keys.filter { !it.isBaked })
+        subscriptionStore.save(s.subscriptions)
+        saveSettings(settings.copy(activeKeyId = s.activeKeyId ?: ""))
+    }
+
+    fun refreshAllSubscriptions() {
+        scope.launch {
+            val subs = _state.value.subscriptions
+            _state.update { it.copy(refreshingSubscriptionIds = subs.map { s -> s.id }.toSet()) }
+            for (sub in subs) {
+                runCatching { refreshSubscription(sub) }
+            }
+        }
     }
 
     fun onExit() {

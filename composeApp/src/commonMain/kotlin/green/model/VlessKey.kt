@@ -8,6 +8,7 @@ data class VlessKey(
     val name: String,
     val uri: String,
     val addedAt: Long = 0L,
+    val subscriptionId: String? = null,
 )
 
 val VlessKey.isBaked get() = id.startsWith("baked:")
