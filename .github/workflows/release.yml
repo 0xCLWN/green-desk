@@ -16,8 +16,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      # xray-core used to come in via a git submodule; that's gone now that the
+      # monorepo vendors it at protocols/xray-core, so fetch it directly here instead.
+      - name: Checkout xray-core
+        run: git clone --depth 1 https://github.com/0xCLWN/Xray-core xray-core
 
       - uses: actions/setup-java@v4
         with:
@@ -31,7 +34,7 @@ jobs:
           cache-dependency-path: xray-core/go.sum
 
       - name: Build xray (darwin/arm64)
-        run: make xray-mac
+        run: XRAY_DIR=xray-core make xray-mac
 
       - name: Package DMG
         run: ./gradlew :composeApp:packageDmg -PbakedKeys="${{ github.event.inputs.baked_keys || secrets.BAKED_KEYS }}"
@@ -49,8 +52,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Checkout xray-core
+        shell: bash
+        run: git clone --depth 1 https://github.com/0xCLWN/Xray-core xray-core
 
       - uses: actions/setup-java@v4
         with:
@@ -65,7 +70,7 @@ jobs:
 
       - name: Build xray (windows/amd64)
         shell: bash
-        run: make xray-windows
+        run: XRAY_DIR=xray-core make xray-windows
 
       - name: Package MSI
         shell: bash
@@ -84,8 +89,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Checkout xray-core
+        run: git clone --depth 1 https://github.com/0xCLWN/Xray-core xray-core
 
       - uses: actions/setup-java@v4
         with:
@@ -99,7 +105,7 @@ jobs:
           cache-dependency-path: xray-core/go.sum
 
       - name: Build xray (linux/amd64)
-        run: make xray-linux
+        run: XRAY_DIR=xray-core make xray-linux
 
       - name: Create distributable
         run: ./gradlew :composeApp:createDistributable -PbakedKeys="${{ github.event.inputs.baked_keys || secrets.BAKED_KEYS }}"
